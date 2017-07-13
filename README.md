@@ -1,6 +1,7 @@
 # Binary AST Proposal Overview
 
 Shu-yu Guo, David Teller (Mozilla)
+
 Vladan Djeric (Facebook)
 
 This is the explainer document for a proposed new binary AST format for JS.
@@ -70,9 +71,7 @@ Instead, we propose a separate tree grammar, with annotations on AST nodes that 
 Borrowing from the WebAssembly approach, the binary encoding would be split into 3 layers:
 
 1. A simple binary encoding of the AST nodes using basic primitives (e.g., strings, numbers, tuples)
-
 2. Additional structural compression on top of the previous layer, leveraging knowledge about the nature of the format of the file and the AST (e.g., constant tables)
-
 3. A generic compression algorithm like gzip or Brotli.
 
 We expect the format to be output by existing compilers such as Babel, TypeScript, etc.
@@ -154,12 +153,8 @@ The time required to create a full AST was reduced by ~70-90%, which is a consid
 On the Web, no vendor would agree to ship bytecode.
 
 1. Engines don’t want to be tied to a bytecode version.
-
 2. It’s harder to verify bytecode, as bytecode is more expressive than syntax.
-
-3. It runs the risk of bifurcating the language, as bytecode may be more
-   expressive than structured JavaScript source.
-
+3. It runs the risk of bifurcating the language, as bytecode may be more expressive than structured JavaScript source.
 4. Designing a new bytecode is an even more ambitious undertaking.
 
 **Why not a semantic graph? Or why not go further? Why not types?**
