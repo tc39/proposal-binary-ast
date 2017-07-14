@@ -48,20 +48,20 @@ One fundamental issue making parsing slow is that information needed to make dec
 
 One concrete example is the problem of efficiently representing bindings. In order to make decisions about how to represent or allocate a variable, the parser needs to know whether the variable is closed over, so it becomes necessary to parse any nested functions. The specification only states where a declaration like `var x` needs to be reachable, not how to allocate it -- the information needed for the allocation decision is not encoded where the variable is declared, nor at the spot where it needs to be allocated.
 
-In the following example, due to variable hoisting, `use_y` closes over `y`, which is not known to be declared in `f` at the point of parsing the inner function. An engine cannot emit optimized accesses to `y` inside `use_y` until the entirety of `f` is parsed.
+In the following example, due to variable hoisting, `use_x` closes over `x`, which is not known to be declared in `f` at the point of parsing the inner function. An engine cannot emit optimized accesses to `x` inside `use_x` until the entirety of `f` is parsed.
 
 ```javascript
-var y;
+var x;
 function f() {
-  function use_y() {
-    use(y); // Closes over hoisted var y.
+  function use_x() {
+    use(x); // Closes over hoisted var x.
   }
 
-  var y;
+  var x;
 }
 ```
 
-In the following example, an engine's frontend should like to know how to efficiently allocate space for the `var` declarations as they are parsed. That is not possible without parsing the rest of the function.
+In the following example, an engine's frontend would like to know how to efficiently allocate space for the `var` declarations as they are parsed. That is not possible without parsing the rest of the function.
 
 ```javascript
 function g() {
