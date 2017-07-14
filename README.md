@@ -36,7 +36,7 @@ We have also implemented a prototype encoder and decoder that demonstrates encou
 
 ## Design Philosophy
 
-The overriding design philosophy is to be conservative, so as to be realistic both in implementation and committee. That means this proposal is intended to be simply an alternative encoding of the surface syntax with the smallest possible delta to enable high performance parsing. That means encoding semantics (e.g., bytecode, encoding variables instead identifiers) is intentionally outside the scope of this proposal.
+The overriding design philosophy is to be conservative, so as to be realistic both in implementation and committee. This proposal is intended to be simply an alternative encoding of the surface syntax with the smallest possible delta to enable high performance parsing. Encoding semantics (e.g., bytecode, encoding variables instead identifiers) is intentionally outside the scope of this proposal.
 
 That said, this proposal is highly ambitious.
 
@@ -48,9 +48,65 @@ One fundamental issue making parsing slow is that information needed to make dec
 
 One concrete example is the problem of efficiently representing bindings. In order to make decisions about how to represent or allocate a variable, the parser needs to know whether the variable is closed over, so it becomes necessary to parse any nested functions. The specification only states where a declaration like `var x` needs to be reachable, not how to allocate it -- the information needed for the allocation decision is not encoded where the variable is declared, nor at the spot where it needs to be allocated.
 
+In the following example, due to variable hoisting, `use_y` closes over `y`, which is not known to be declared in `f` at the point of parsing the inner function. An engine cannot emit optimized accesses to `y` inside `use_y` until the entirety of `f` is parsed.
+
+```javascript
+var y;
+function f() {
+  function use_y() {
+    use(y); // Closes over hoisted var y.
+  }
+
+  var y;
+}
+```
+
+In the following example, an engine's frontend should like to know how to efficiently allocate space for the `var` declarations as they are parsed. That is not possible without parsing the rest of the function.
+
+```javascript
+function g() {
+  var x; // Not closed over, should go on function frame.
+  var y; // Closed over, should go on activation object.
+
+  return (function() { use(y); });
+}
+```
+
+In the following example, the presence of `eval` at the bottom of the function is unknown at the time when the engine needs to decide if `var x` may be accessed dynamically.
+
+```javascript
+function h(input) {
+  var x;
+
+  (function() {
+    eval(input);
+  })();
+}
+```
+
 ### <a name="problem2"></a> 2. Early Error Semantics
 
-JavaScript’s early error semantics require the entirety of every file be parsed. Engines employ a lazy parsing (also known as pre-parsing) optimization that avoids building a full AST by skipping initial code generation for inner functions until time of first invocation. This is only 50% faster on average, and parsing effort is still proportional to file size. What's worse, this optimization can backfire. If an inner function whose code generation was skipped happens to be called during startup, then the engine must in effect re-parse the entire function. This happens often enough that developers have resorted to using immediately-invoked function expressions to altogether bypass lazy parsing.
+JavaScript’s early error semantics requires the entirety of every file be parsed. Engines employ a lazy parsing (also known as pre-parsing) optimization that avoids building a full AST by skipping initial code generation for inner functions until time of first invocation. This is only 50% faster on average, and parsing effort is still proportional to file size. What's worse, this optimization can backfire. If an inner function whose code generation was skipped happens to be called during application startup, then the engine must in effect re-parse the entire function. This happens often enough that developers have resorted to using immediately-invoked function expressions to altogether bypass lazy parsing.
+
+Consider the following. Currently, since `innerWithSyntaxError` has an early error, `outer` also must throw the early error.
+
+```javascript
+function outer() {
+  function innerWithSyntaxError() {
+    var;
+  }
+}
+```
+
+The proposed behavior change is analogous to wrapping function bodies with `eval`, as below.
+
+```javascript
+function outer() {
+  function innerWithSyntaxError() {
+    eval("var");
+  }
+}
+```
 
 ### <a name="problem3"></a> 3. Inefficiencies in Using Characters
 
