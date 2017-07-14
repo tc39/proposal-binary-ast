@@ -16,7 +16,7 @@ A brief survey from July 2017 of the uncompressed JS payload sizes for some popu
 | LinkedIn          | 7.2 MB               |
 | Facebook          | 7.1 MB               |
 | Google Sheets     | 5.8 MB               |
-| GMail             | 3.9 MB               |
+| Gmail             | 3.9 MB               |
 | Yahoo             | 3.4 MB               |
 
 | Web App (Mobile) | Uncompressed JS Size |
@@ -41,19 +41,19 @@ That said, this proposal is highly ambitious.
 
 ## Current Parsing Bottlenecks
 
-### 1. Information Not Available Where Needed
+### <a name="problem1"></a> 1. Information Not Available Where Needed 
 
 One fundamental issue making parsing slow is that information needed to make decisions during parsing is oftentimes not yet available at the point in the input stream at which it is needed. This happens when the parser needs information from code it either hasn't parsed yet (like variable hoisting) or code it doesn't want to parse (like inner functions).
 
 One concrete example is the problem of efficiently representing bindings. In order to make decisions about how to represent or allocate a variable, the parser needs to know whether the variable is closed over, so it becomes necessary to parse any nested functions. The specification only states where a declaration like `var x` needs to be reachable, not how to allocate it -- the information needed for the allocation decision is not encoded where the variable is declared, nor at the spot where it needs to be allocated.
 
-### 2. Early Error Semantics
+### <a name="problem2"></a> 2. Early Error Semantics
 
-JavaScript’s early error semantics require the entirety of every file be parsed. Engines employ a lazy parsing (also known as pre-parsing) optimization that avoid building a full AST by skipping initial code generation for inner functions until time of first invocation. This is only 50% faster on average, and parsing effort is still proportional to file size. What's worse, this optimization can backfire. If an inner function whose code generation was skipped happens to be called during startup, then the engine must in effect re-parse the entire function. This happens often enough that developers have resorted to using immediately-invoked function expressions to altogether bypass lazy parsing.
+JavaScript’s early error semantics require the entirety of every file be parsed. Engines employ a lazy parsing (also known as pre-parsing) optimization that avoids building a full AST by skipping initial code generation for inner functions until time of first invocation. This is only 50% faster on average, and parsing effort is still proportional to file size. What's worse, this optimization can backfire. If an inner function whose code generation was skipped happens to be called during startup, then the engine must in effect re-parse the entire function. This happens often enough that developers have resorted to using immediately-invoked function expressions to altogether bypass lazy parsing.
 
-### 3. Inefficiencies in Using Characters
+### <a name="problem3"></a> 3. Inefficiencies in Using Characters
 
-When parsing, there can be ambiguity at the character-level about what type of expression a JavaScript syntax is encoding. For example, to distinguish between list expressions and the parameter list for an arrow function, parsers need to do do additional bookkeeping to account for all valid interpretations until the ambiguity is resolved, or they need to have the ability to backtrack while parsing.
+When parsing, there can be ambiguity at the character-level about what type of expression a JavaScript syntax is encoding. For example, to distinguish between list expressions and the parameter list for an arrow function, parsers need to do additional bookkeeping to account for all valid interpretations until the ambiguity is resolved, or they need to have the ability to backtrack while parsing.
 
 Similarly, lexing is slow due to reasons such as Unicode encoding and having to handle Unicode escape codes. Engines need to check if some text is single-byte or double-byte encoded, for instance.
 
@@ -61,7 +61,7 @@ Similarly, lexing is slow due to reasons such as Unicode encoding and having to 
 
 We propose a binary encoding based on an efficient abstract syntax tree representation of JavaScript syntax. This is a new, alternate encoding of the surface syntax, with a fairly close bidirectional mapping to the text representation. We seek to be as conservative as possible in introducing new semantics, which are currently limited to deferring early errors, changing `Function.prototype.toString` behavior, and requiring UTF-8. To further speed up parsing, we propose to encode static semantics as implementation hints, and verify them as deferred assertions.
 
-For this AST format, we currently do not propose to automatically derive from the Ecma262 grammar since it is too verbose to be an efficient tree representation, and as such it would require a lot of flattening and inlining. Additionally, this might restrict the evolution of the JavaScript specification by effectively making the grammar a normative specification of the binary format.
+For this AST format, we currently do not propose to automatically derive from the ECMA-262 grammar since it is too verbose to be an efficient tree representation, and as such it would require a lot of flattening and inlining. Additionally, this might restrict the evolution of the JavaScript specification by effectively making the grammar a normative specification of the binary format.
 
 Instead, we propose a separate tree grammar, with annotations on AST nodes that only express information about the syntax. There are several existing tree grammars which we may take as a starting point, such as Babylon or Shift AST.
 
@@ -91,7 +91,7 @@ To save file space, presets will be supported (e.g., ES2015).
 
 ### Static Semantics as Annotations
 
-To address concern 1 (Information Not Available Where Needed) above, the insight is that all the currently known cases of "information not available where needed" are binding-related. Scope nodes, like function or lexical scope nodes, are able to encode additional annotations about the properties of the AST.
+To address concern 1 [Information Not Available Where Needed](#problem1) above, the insight is that all the currently known cases of "information not available where needed" are binding-related. Scope nodes, like function or lexical scope nodes, are able to encode additional annotations about the properties of the AST.
 
 A non-exhaustive list of annotations currently considered:
 
@@ -107,13 +107,13 @@ In order to prevent divergence across implementations with regards to timing, su
 
 It is important to note that these annotations must be checked and are not, strictly speaking, hints that may be ignored. They are assertions on the structure of the syntax tree, and must be verified whether or not an engine chooses to use them as parsing hints.
 
-These annotations would be specified as existing or new Static Semantics.
+These annotations would be specified as existing or new static semantics.
 
-Ultimately, this list is ad-hoc and the union of properties that various engines currently derive during parsing. With these annotations, engines may generate code for functions in a single forward pass without parsing the functions in entirety. If the needed hints are not present for an engine to do the single-pass fast path, the fallback is the existing analysis that engines already implement. Should the need for new annotations arise, we expect them to be standardized as new Static Semantics.
+Ultimately, this list is ad-hoc and the union of properties that various engines currently derive during parsing. With these annotations, engines may generate code for functions in a single forward pass without parsing the functions in entirety. If the needed hints are not present for an engine to do the single-pass fast path, the fallback is the existing analysis that engines already implement. Should the need for new annotations arise, we expect them to be standardized as new static semantics.
 
 ### Deferred Early Errors
 
-To address concern 2 (Early Error Semantics), Early Errors, like annotation verification, will be deferred to until when the nearest enclosing function is invoked or the nearest enclosing global script is evaluated.
+To address concern 2 [Early Error Semantics](#problem2), Early Errors, like annotation verification, will be deferred to until when the nearest enclosing function is invoked or the nearest enclosing global script is evaluated.
 
 This is a breaking change from textual JS.
 
@@ -121,15 +121,15 @@ Since this format is expected to be compiler output, early errors would be caugh
 
 ### UTF-8 with no escape codes
 
-To address concern 3 (Inefficiencies in Using Characters), strings and identifiers will be required to be in UTF-8 without support for escape codes. Again, we expect this to be feasible as the format will be compiler output.
+To address concern 3 [Inefficiencies in Using Characters](#problem3), strings and identifiers will be required to be in UTF-8 without support for escape codes. Again, we expect this to be feasible as the format will be compiler output.
 
 ### Verification
 
-Verification of the header, tree structure itself (e.g., its length-encoded nodes, the allowed kinds for child nodes), and annotations, are intended to be possible in a single forward pass as constant work per node, as the AST is being decoded.
+Verification of the header, annotations, and the tree structure itself (e.g., its length-encoded nodes, the allowed kinds for child nodes) is intended to be possible in a single forward pass as constant work per node, as the AST is being decoded.
 
 ### Function.prototype.toString()
 
-Something like `"[sourceless code]"`.
+This method would return something like `"[sourceless code]"`.
 
 ### Exception Offsets
 
@@ -141,7 +141,7 @@ It is straightforward to layer additional improvements on this format in order t
 
 ## Prototype
 
-We implemented a prototype in Mozilla’s SpiderMonkey engine, by using a grammar based on internal AST format. This was done for speed of implementation, and our next prototype will be [based on the Babylon](https://git.io/vQ1oE).
+We implemented a prototype in Mozilla’s SpiderMonkey engine, by using a grammar based on internal AST format. This was done for speed of implementation, and our next prototype will be [based on the Babylon AST](https://git.io/vQ1oE).
 
 For the [facebook.com static newsfeed benchmark](https://git.io/vQ1aK), the binary AST representation was slightly smaller than the original JavaScript. This held true even after both representations were passed through gzip for compression. The size reduction mainly came from the use of a string table and variable-length identifiers for entries in the table. It also used variable-length encodings for representing numbers. Additional size wins are possible by leveraging domain-specific information, such as factoring out common subtrees.
 
@@ -166,7 +166,7 @@ On the Web, no vendor would agree to ship bytecode.
 
 We do not want to invent a new language by adding new front-end semantics, nor do we want to encode analysis result and require more sophisticated verification that this information is correct.
 
-**Won't this be a massive mainteance burden?**
+**Won't this be a massive maintenance burden?**
 
 Parsing a binary AST format will not be as complicated as parsing existing JavaScript. It will undoubtedly increase complexity of implementation, but we believe is worth the cost given the trajectory of the complexity and size of web applications.
 
@@ -182,7 +182,7 @@ Additionally, many complex sites today fetch JavaScript on demand when a user in
 
 **Would it be possible to write a tool to convert serialized AST back to JS?**
 
-Yes, it would be possible to automatically generate human-readable JavaScript from the binJS format. By virtue of the syntax tree being abstract and not concrete, the pretty printer will not be perfect recreation of the input JavaScript but it will be semantically equivalent.
+Yes, it would be possible to automatically generate human-readable JavaScript from the AST format. By virtue of the syntax tree being abstract and not concrete, the pretty printer will not be perfect recreation of the input JavaScript but it will be semantically equivalent.
 
 Such serializers may be crucial to providing a compelling devtooling story.
 
