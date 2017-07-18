@@ -36,7 +36,7 @@ We have also implemented a prototype encoder and decoder that demonstrates encou
 
 ## Design Philosophy
 
-The overriding design philosophy is to be conservative, so as to be realistic both in implementation and committee. This proposal is intended to be simply an alternative encoding of the surface syntax with the smallest possible delta to enable high performance parsing. Encoding semantics (e.g., bytecode, encoding variables instead identifiers) is intentionally outside the scope of this proposal.
+The overriding design philosophy is to be conservative, so as to be realistic both in implementation and committee. This proposal is intended to be simply an alternative encoding of the *surface syntax* with the smallest possible delta to enable high performance parsing. By design, this proposal does not attempt any semantics-level encoding (e.g., bytecode, encoding variables instead identifiers).
 
 That said, this proposal is highly ambitious.
 
@@ -116,7 +116,13 @@ Similarly, lexing is slow due to reasons such as Unicode encoding and having to 
 
 ## Proposal
 
-We propose a binary encoding based on an efficient abstract syntax tree representation of JavaScript syntax. This is a new, alternate encoding of the surface syntax, with a fairly close bidirectional mapping to the text representation. We seek to be as conservative as possible in introducing new semantics, which are currently limited to deferring early errors, changing `Function.prototype.toString` behavior, and requiring UTF-8. To further speed up parsing, we propose to encode static semantics as implementation hints, and verify them as deferred assertions.
+We propose a binary encoding based on an efficient abstract syntax tree representation of JavaScript syntax. This is a new, alternate encoding of the surface syntax, with a fairly close bidirectional mapping to the text representation. We seek to be as conservative as possible in introducing new semantics, which are currently limited to:
+
+- deferring early errors;
+- changing `Function.prototype.toString` behavior;
+- requiring UTF-8.
+
+To further speed up parsing, we propose to encode static semantics as implementation hints, and verify them as deferred assertions.
 
 For this AST format, we currently do not propose to automatically derive from the ECMA-262 grammar since it is too verbose to be an efficient tree representation, and as such it would require a lot of flattening and inlining. Additionally, this might restrict the evolution of the JavaScript specification by effectively making the grammar a normative specification of the binary format.
 
@@ -130,7 +136,7 @@ Borrowing from the WebAssembly approach, the binary encoding would be split into
 2. Additional structural compression on top of the previous layer, leveraging knowledge about the nature of the format of the file and the AST (e.g., constant tables)
 3. A generic compression algorithm like gzip or Brotli.
 
-We expect the format to be output by existing compilers such as Babel, TypeScript, etc.
+We expect the format to be output by existing compilers such as Babel, TypeScript, etc. and by bundlers such as WebPack, etc.
 
 ### Grammar
 
@@ -140,7 +146,7 @@ The tree grammar consists of the primitives (booleans, strings, numbers), lists,
 
 The grammar provides the set of all possible node kinds and their ordered properties, which we expect to be monotonically growing. However, not all vendors will support all nodes at any given time. To this end, each file contains a header of a list of nodes and their properties that the file expects to be used. For example, suppose the grammar currently provides a `FunctionExpression` node that includes an `isAsync` property. If a file expects async functions to be supported, it would include a `FunctionExpression` entry that includes `isAsync` in the list of properties. If a node or property in the header is not supported by the implementation, an error is thrown.
 
-The header solves the versioning problem, forwards compatibility, and backwards compatibility. It also acts as structural compression: node kinds are to be referred to by their index in the header instead of their name.
+The header solves the versioning problem, forwards compatibility, and backwards compatibility. It also maintains the expected behavior of JavaScript parsers with respect to new features, insofar as parsing a correctly formatted file fails if a parser encounters a feature that the engine does not implement, rather than relying upon a monolithic version number. Finally, it acts as structural compression: node kinds are to be referred to by their index in the header instead of their name.
 
 To save file space, presets will be supported (e.g., ES2015).
 
@@ -165,6 +171,8 @@ It is important to note that these annotations must be checked and are not, stri
 These annotations would be specified as existing or new static semantics.
 
 Ultimately, this list is ad-hoc and the union of properties that various engines currently derive during parsing. With these annotations, engines may generate code for functions in a single forward pass without parsing the functions in entirety. If the needed hints are not present for an engine to do the single-pass fast path, the fallback is the existing analysis that engines already implement. Should the need for new annotations arise, we expect them to be standardized as new static semantics.
+
+Annotations and scopes are embedded in the AST just as any other node properties and use the same versioning mechanism.
 
 ### Deferred Early Errors
 
@@ -196,11 +204,11 @@ It is straightforward to layer additional improvements on this format in order t
 
 ## Prototype
 
-We implemented a prototype in Mozilla’s SpiderMonkey engine, by using a grammar based on internal AST format. This was done for speed of implementation, and our next prototype will be [based on the Babylon AST](https://git.io/vQ1oE).
+We implemented an early prototype in Mozilla’s SpiderMonkey engine, by using a grammar based on internal AST format. This was done for speed of implementation, and our next prototype will be [based on the Babylon AST](https://git.io/vQ1oE).
 
 For the [facebook.com static newsfeed benchmark](https://git.io/vQ1aK), the binary AST representation was slightly smaller than the original JavaScript. This held true even after both representations were passed through gzip for compression. The size reduction mainly came from the use of a string table and variable-length identifiers for entries in the table. It also used variable-length encodings for representing numbers. Additional size wins are possible by leveraging domain-specific information, such as factoring out common subtrees.
 
-The time required to create a full AST was reduced by ~70-90%, which is a considerable reduction since parsing time in SpiderMonkey for the plain JavaScript was 500-800 ms for the benchmark.
+The time required to create a full AST (without verifying annotations) was reduced by ~70-90%, which is a considerable reduction since parsing time in SpiderMonkey for the plain JavaScript was 500-800 ms for the benchmark.
 
 ## FAQ
 
