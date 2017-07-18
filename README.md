@@ -36,7 +36,7 @@ We have also implemented a prototype encoder and decoder that demonstrates encou
 
 ## Design Philosophy
 
-The overriding design philosophy is to be conservative, so as to be realistic both in implementation and committee. This proposal is intended to be simply an alternative encoding of the *surface syntax* with the smallest possible delta to enable high performance parsing. By design, this proposal does not attempt any semantics-level encoding (e.g., bytecode, encoding variables instead identifiers).
+The overriding design philosophy is to be conservative, so as to be realistic both in implementation and committee. This proposal is intended to be simply an alternative encoding of the *surface syntax* with the smallest possible delta to enable high performance parsing. By design, this proposal does not attempt any semantics-level encoding (e.g., bytecode, encoding variables instead of identifiers).
 
 That said, this proposal is highly ambitious.
 
@@ -118,9 +118,9 @@ Similarly, lexing is slow due to reasons such as Unicode encoding and having to 
 
 We propose a binary encoding based on an efficient abstract syntax tree representation of JavaScript syntax. This is a new, alternate encoding of the surface syntax, with a fairly close bidirectional mapping to the text representation. We seek to be as conservative as possible in introducing new semantics, which are currently limited to:
 
-- deferring early errors;
-- changing `Function.prototype.toString` behavior;
-- requiring UTF-8.
+- deferring early errors
+- changing `Function.prototype.toString` behavior
+- requiring UTF-8
 
 To further speed up parsing, we propose to encode static semantics as implementation hints, and verify them as deferred assertions.
 
@@ -136,7 +136,7 @@ Borrowing from the WebAssembly approach, the binary encoding would be split into
 2. Additional structural compression on top of the previous layer, leveraging knowledge about the nature of the format of the file and the AST (e.g., constant tables)
 3. A generic compression algorithm like gzip or Brotli.
 
-We expect the format to be output by existing compilers such as Babel, TypeScript, etc. and by bundlers such as WebPack, etc.
+We expect the format to be output by existing compilers such as Babel and TypeScript, and by bundlers such as WebPack.
 
 ### Grammar
 
