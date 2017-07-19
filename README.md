@@ -140,11 +140,11 @@ We expect the format to be output by existing compilers such as Babel and TypeSc
 
 ### Grammar
 
-The tree grammar consists of the primitives (booleans, strings, numbers), lists, and disjoint unions. Disjoint unions are tagged and have a fixed, expected structure (ordered properties) for a given file. Certain nodes, such as strings and lists, are encoded together with their length, allowing parsers to skip through a stream of the payload.
+The tree grammar consists of the primitives (booleans, strings, numbers), lists, and disjoint unions. Disjoint unions are tagged and have a fixed, expected structure (ordered properties) for a given file. Certain nodes, such as strings and lists, are encoded together with their encoded byte length, allowing parsers to skip past the encoded representation of the node.
 
 ### Language Evolution and Versioning
 
-The grammar provides the set of all possible node kinds and their ordered properties, which we expect to be monotonically growing. However, not all vendors will support all nodes at any given time. To this end, each file contains a header of a list of nodes and their properties that the file expects to be used. For example, suppose the grammar currently provides a `FunctionExpression` node that includes an `isAsync` property. If a file expects async functions to be supported, it would include a `FunctionExpression` entry that includes `isAsync` in the list of properties. If a node or property in the header is not supported by the implementation, an error is thrown.
+The grammar provides the set of all possible node kinds and their ordered properties, which we expect to be monotonically growing. However, not all vendors will support all nodes at any given time. To this end, each file contains a header containing a list of nodes and their properties that the file expects to be used. For example, suppose the grammar currently provides a `FunctionExpression` node that includes an `isAsync` property. If a file expects async functions to be supported, it would include a `FunctionExpression` entry that includes `isAsync` in the list of properties. If a node or property in the header is not supported by the implementation, an error is thrown.
 
 The header solves the versioning problem, forwards compatibility, and backwards compatibility. It also maintains the expected behavior of JavaScript parsers with respect to new features, insofar as parsing a correctly formatted file fails if a parser encounters a feature that the engine does not implement, rather than relying upon a monolithic version number. Finally, it acts as structural compression: node kinds are to be referred to by their index in the header instead of their name.
 
@@ -160,7 +160,7 @@ A non-exhaustive list of annotations currently considered:
 2. LexicallyDeclaredNames
 3. ClosedOverNames (new)
 4. AssignedToOutsideOfDeclarationNames (new)
-5. Has CallExpression where LHS is IdentifierReference of string literal `eval` (new)
+5. Has CallExpression where the callee expression is IdentifierReference of string literal `eval` (new)
 
 These annotations, if present, behave as lazy assertions. By the time the scope node is finished being traversed (which may be arbitrarily delayed in case a skipped inner function is never invoked), if the encoded annotation is contrary to the body of the node, a runtime error is thrown. For example, if a function body is annotated with "has VarDeclaredNames `x`", but does not in fact contain a var declaration with name `x`, an error would be thrown.
 
