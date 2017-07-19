@@ -221,6 +221,10 @@ On the Web, no vendor would agree to ship bytecode.
 3. It runs the risk of bifurcating the language, as bytecode may be more expressive than structured JavaScript source.
 4. Designing a new bytecode is an even more ambitious undertaking.
 
+**Why not use WebAssembly?**
+
+There are massive existing untyped codebases, and there is no easy way to convert an untyped, garbage collected language to WebAssembly. And even if there were, there is no guarantee that it would be any faster to transmit/parse/start than what we currently have.
+
 **Why not a semantic graph? Or why not go further? Why not types?**
 
 We do not want to invent a new language by adding new front-end semantics, nor do we want to encode analysis result and require more sophisticated verification that this information is correct.
