@@ -208,7 +208,7 @@ We implemented an early prototype in Mozilla’s SpiderMonkey engine, by using a
 
 For the [facebook.com static newsfeed benchmark](https://git.io/vQ1aK), the binary AST representation was slightly smaller than the original JavaScript. This held true even after both representations were passed through gzip for compression. The size reduction mainly came from the use of a string table and variable-length identifiers for entries in the table. It also used variable-length encodings for representing numbers. Additional size wins are possible by leveraging domain-specific information, such as factoring out common subtrees.
 
-The time required to create a full AST (without verifying annotations) was reduced by ~70-90%, which is a considerable reduction since parsing time in SpiderMonkey for the plain JavaScript was 500-800 ms for the benchmark.
+The time required to create a full AST (without verifying annotations) was reduced by ~70-90%, which is a considerable reduction since SpiderMonkey's AST construction time for the plain JavaScript was 500-800 ms for the benchmark.
 
 ## FAQ
 
