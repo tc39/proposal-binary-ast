@@ -223,7 +223,7 @@ On the Web, no vendor would agree to ship bytecode.
 
 **Why not use WebAssembly?**
 
-There are massive existing untyped codebases, and there is no easy way to convert an untyped, garbage collected language to WebAssembly. And even if there were, there is no guarantee that it would be any faster to transmit/parse/start than what we currently have.
+There are massive existing untyped JS codebases, and there is no easy way to convert an untyped, garbage collected language like JS to WebAssembly. Given that currently using WebAssembly to ship JavaScript most likely involves bundling a JS runtime as well, it is unclear such a setup would net any load-time performance improvements.
 
 **Why not a semantic graph? Or why not go further? Why not types?**
 
