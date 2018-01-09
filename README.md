@@ -1,6 +1,8 @@
 # Binary AST Proposal Overview
 
-Shu-yu Guo, David Teller, Kannan Vijayan (Mozilla)
+Shu-yu Guo (Bloomberg)
+
+David Teller, Kannan Vijayan (Mozilla)
 
 Vladan Djeric (Facebook)
 
