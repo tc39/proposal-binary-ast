@@ -283,7 +283,7 @@ interface AssignmentTargetWithDefault : Node {
 // `ArrayAssignmentPattern`
 interface ArrayAssignmentTarget : Node {
   // The elements of the array pattern; a null value represents an elision.
-  attribute FrozenArray<(AssignmentTarget or AssignmentTargetWithDefault)>? elements;
+  attribute FrozenArray<(AssignmentTarget or AssignmentTargetWithDefault?)> elements;
   attribute AssignmentTarget? rest;
 };
 
@@ -488,7 +488,7 @@ interface LiteralStringExpression : Node {
 // `ArrayLiteral`
 interface ArrayExpression : Node {
   // The elements of the array literal; a null value represents an elision.
-  attribute FrozenArray<(SpreadElement or Expression)>? elements;
+  attribute FrozenArray<(SpreadElement or Expression)?> elements;
 };
 
 // `ArrowFunction`, `AsyncArrowFunction`
@@ -822,7 +822,6 @@ interface VariableDeclarator : Node {
   attribute Binding binding;
   attribute Expression? init;
 };
-
 ```
 
 ## *Ecmaify*
