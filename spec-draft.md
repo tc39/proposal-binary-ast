@@ -23,7 +23,7 @@ The grammar is WebIDL-like with the `[TypeIndicator]` and `NonEmpty` extensions 
 ```webidl
 // Type aliases and enums.
 
-typedef (SpreadElement or Expression)[] Arguments;
+typedef FrozenArray<(SpreadElement or Expression)> Arguments;
 typedef DOMString string;
 typedef string Identifier;
 typedef string IdentifierName;
@@ -56,7 +56,7 @@ enum BinaryOperator {
   "&&",
   "|",
   "^",
-  "&"
+  "&",
   "==",
   "!=",
   "===",
@@ -97,9 +97,9 @@ enum UpdateOperator {
 // Binary AST delayed assertions
 
 interface AssertedScope {
-  attribute IdentifierName[] varDeclaredNames;
-  attribute IdentifierName[] lexicallyDeclaredNames;
-  attribute IdentifierName[] capturedNames;
+  attribute FrozenArray<IdentifierName> varDeclaredNames;
+  attribute FrozenArray<IdentifierName> lexicallyDeclaredNames;
+  attribute FrozenArray<IdentifierName> capturedNames;
   attribute boolean hasDirectEval;
 };
 
@@ -250,7 +250,7 @@ interface StaticMemberAssignmentTarget : Node {
 // `ArrayBindingPattern`
 interface ArrayBinding : Node {
   // The elements of the array pattern; a null value represents an elision.
-  attribute (Binding or BindingWithDefault)?[] elements;
+  attribute FrozenArray<(Binding or BindingWithDefault)?> elements;
   attribute Binding? rest;
 };
 
@@ -271,7 +271,7 @@ typedef (BindingPropertyIdentifier or
         BindingProperty;
 
 interface ObjectBinding : Node {
-  attribute BindingProperty[] properties;
+  attribute FrozenArray<BindingProperty> properties;
 };
 
 // This interface represents the case where the initializer is present in `AssignmentElement :: DestructuringAssignmentTarget Initializer_opt`.
@@ -283,7 +283,7 @@ interface AssignmentTargetWithDefault : Node {
 // `ArrayAssignmentPattern`
 interface ArrayAssignmentTarget : Node {
   // The elements of the array pattern; a null value represents an elision.
-  attribute (AssignmentTarget or AssignmentTargetWithDefault)?[] elements;
+  attribute FrozenArray<(AssignmentTarget or AssignmentTargetWithDefault?)> elements;
   attribute AssignmentTarget? rest;
 };
 
@@ -305,7 +305,7 @@ typedef (AssignmentTargetPropertyIdentifier or
 
 // `ObjectAssignmentPattern`
 interface ObjectAssignmentTarget : Node {
-  attribute AssignmentTargetProperty[] properties;
+  attribute FrozenArray<AssignmentTargetProperty> properties;
 };
 
 
@@ -314,13 +314,13 @@ interface ObjectAssignmentTarget : Node {
 interface ClassExpression : Node {
   attribute BindingIdentifier? name;
   attribute Expression? super;
-  attribute ClassElement[] elements;
+  attribute FrozenArray<ClassElement> elements;
 };
 
 interface ClassDeclaration : Node {
   attribute BindingIdentifier name;
   attribute Expression? super;
-  attribute ClassElement[] elements;
+  attribute FrozenArray<ClassElement> elements;
 };
 
 interface ClassElement : Node {
@@ -333,16 +333,16 @@ interface ClassElement : Node {
 // modules
 
 interface Module : Node {
-  attribute Directive[] directives;
-  attribute (ImportDeclaration or ExportDeclaration or Statement)[] items;
+  attribute FrozenArray<Directive> directives;
+  attribute FrozenArray<(ImportDeclaration or ExportDeclaration or Statement)> items;
 };
 
 // An `ImportDeclaration` not including a namespace import.
-interface Import : ImportDeclaration {
+interface Import : Node {
   attribute string moduleSpecifier;
   // `ImportedDefaultBinding`, if present.
   attribute BindingIdentifier? defaultBinding;
-  attribute ImportSpecifier[] namedImports;
+  attribute FrozenArray<ImportSpecifier> namedImports;
 };
 
 // An `ImportDeclaration` including a namespace import.
@@ -366,13 +366,13 @@ interface ExportAllFrom : Node {
 
 // `export ExportClause FromClause;`
 interface ExportFrom : Node {
-  attribute ExportFromSpecifier[] namedExports;
+  attribute FrozenArray<ExportFromSpecifier> namedExports;
   attribute string moduleSpecifier;
 };
 
 // `export ExportClause;`
 interface ExportLocals : Node {
-  attribute ExportLocalSpecifier[] namedExports;
+  attribute FrozenArray<ExportLocalSpecifier> namedExports;
 };
 
 // `export VariableStatement`, `export Declaration`
@@ -488,7 +488,7 @@ interface LiteralStringExpression : Node {
 // `ArrayLiteral`
 interface ArrayExpression : Node {
   // The elements of the array literal; a null value represents an elision.
-  attribute (SpreadElement or Expression)?[] elements;
+  attribute FrozenArray<(SpreadElement or Expression)?> elements;
 };
 
 // `ArrowFunction`, `AsyncArrowFunction`
@@ -572,7 +572,7 @@ interface NewExpression : Node {
 interface NewTargetExpression : Node { };
 
 interface ObjectExpression : Node {
-  attribute ObjectProperty[] properties;
+  attribute FrozenArray<ObjectProperty> properties;
 };
 
 interface UnaryExpression : Node {
@@ -592,7 +592,7 @@ interface TemplateExpression : Node {
   // The second `MemberExpression` or `CallExpression`, if present.
   attribute Expression? tag;
   // The contents of the template. This list must be alternating TemplateElements and Expressions, beginning and ending with TemplateElement.
-  attribute (Expression or TemplateElement)[] elements;
+  attribute FrozenArray<(Expression or TemplateElement)> elements;
 };
 
 // `PrimaryExpression :: this`
@@ -648,7 +648,7 @@ interface ExpressionStatement : Node {
 interface ForInOfBinding : Node {
   attribute VariableDeclarationKind kind;
   attribute Binding binding;
-}
+};
 
 // `for ( LeftHandSideExpression in Expression ) Statement`, `for ( var ForBinding in Expression ) Statement`, `for ( ForDeclaration in Expression ) Statement`, `for ( var BindingIdentifier Initializer in Expression ) Statement`
 interface ForInStatement : Node {
@@ -700,18 +700,18 @@ interface ReturnStatement : Node {
 // A `SwitchStatement` whose `CaseBlock` is `CaseBlock :: { CaseClauses }`.
 interface SwitchStatement : Node {
   attribute Expression discriminant;
-  attribute SwitchCase[] cases;
+  attribute FrozenArray<SwitchCase> cases;
 };
 
 // A `SwitchStatement` whose `CaseBlock` is `CaseBlock :: { CaseClauses DefaultClause CaseClauses }`.
 interface SwitchStatementWithDefault : Node {
   attribute Expression discriminant;
   // The `CaseClauses` before the `DefaultClause`.
-  attribute SwitchCase[] preDefaultCases;
+  attribute FrozenArray<SwitchCase> preDefaultCases;
   // The `DefaultClause`.
   attribute SwitchDefault defaultCase;
   // The `CaseClauses` after the `DefaultClause`.
-  attribute SwitchCase[] postDefaultCases;
+  attribute FrozenArray<SwitchCase> postDefaultCases;
 };
 
 interface ThrowStatement : Node {
@@ -749,7 +749,7 @@ interface WithStatement : Node {
 
 interface Block : Node {
   attribute AssertedScope? scope;
-  attribute Statement[] statements;
+  attribute FrozenArray<Statement> statements;
 };
 
 // `Catch`
@@ -764,13 +764,13 @@ interface Directive : Node {
 };
 
 interface FormalParameters : Node {
-  attribute Parameter[] items;
+  attribute FrozenArray<Parameter> items;
   attribute Binding? rest;
 };
 
 interface FunctionBody : Node {
-  attribute Directive[] directives;
-  attribute Statement[] statements;
+  attribute FrozenArray<Directive> directives;
+  attribute FrozenArray<Statement> statements;
 };
 
 // `FunctionDeclaration`,
@@ -786,8 +786,8 @@ interface FunctionDeclaration : Node {
 };
 
 interface Script : Node {
-  attribute Directive[] directives;
-  attribute Statement[] statements;
+  attribute FrozenArray<Directive> directives;
+  attribute FrozenArray<Statement> statements;
 };
 
 interface SpreadElement : Node {
@@ -800,12 +800,12 @@ interface Super : Node { };
 // `CaseClause`
 interface SwitchCase : Node {
   attribute Expression test;
-  attribute Statement[] consequent;
+  attribute FrozenArray<Statement> consequent;
 };
 
 // `DefaultClause`
 interface SwitchDefault : Node {
-  attribute Statement[] consequent;
+  attribute FrozenArray<Statement> consequent;
 };
 
 // `TemplateCharacters`
@@ -815,14 +815,13 @@ interface TemplateElement : Node {
 
 interface VariableDeclaration : Node {
   attribute VariableDeclarationKind kind;
-  [NonEmpty] attribute VariableDeclarator[] declarators;
+  [NonEmpty] attribute FrozenArray<VariableDeclarator> declarators;
 };
 
 interface VariableDeclarator : Node {
   attribute Binding binding;
   attribute Expression? init;
 };
-
 ```
 
 ## *Ecmaify*
