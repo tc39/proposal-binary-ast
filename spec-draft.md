@@ -129,7 +129,7 @@ typedef (Block or
          FunctionDeclaration or
          IfStatement or
          IterationStatement or
-         LabelledStatement or
+         LabeledStatement or
          ReturnStatement or
          SwitchStatement or
          SwitchStatementWithDefault or
@@ -688,7 +688,7 @@ interface IfStatement : Node {
   attribute Statement? alternate;
 };
 
-interface LabelledStatement : Node {
+interface LabeledStatement : Node {
   attribute Label label;
   attribute Statement body;
 };
@@ -1267,15 +1267,15 @@ Ecmaify(_while_ : WhileStatement)
 1. Let _body_ be StatementEcmaify(_while_.body).
 1. Return *IterationStatement* : **<tt>while</tt>** **<tt>(</tt>** _test_ **<tt>)</tt>** _body_.
 
-Ecmaify(_labelled_ : LabelledStatement)
+Ecmaify(_labelled_ : LabeledStatement)
 
 1. Let _body_ be an empty Parse Node.
 1. If _labelled_.body is a FunctionDeclaration, then:
     1. If _labelled_.body.isAsync is true or _labelled_.body.isGenerator is true, then throw a **SyntaxError** exception.
     1. Set _body_ to Ecmaify(_labelled_.body).
 1. Else, set _body_ to StatementEcmaify(_labelled_.body).
-1. Let _item_ be *LabelledItem* : _body_.
-1. Return *LabelledStatement* : _labelled_.label **<tt>:</tt>** _item_.
+1. Let _item_ be *LabeledItem* : _body_.
+1. Return *LabeledStatement* : _labelled_.label **<tt>:</tt>** _item_.
 
 Ecmaify(_ret_ : ReturnStatement)
 
