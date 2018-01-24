@@ -448,7 +448,7 @@ interface ComputedPropertyName : Node {
 };
 
 // `LiteralPropertyName`
-interface StaticPropertyName : Node {
+interface LiteralPropertyName : Node {
   attribute string value;
 };
 
@@ -1696,7 +1696,7 @@ Ecmaify(_name_ : ComputedPropertyName)
 1. Let _expr_ be AssignmentExpressionEcmaify(_name_.expression).
 1. Return *ComputedPropertyName* : **<tt>[</tt>** _expr_ **<tt>]</tt>**.
 
-Ecmaify(_name_ : StaticPropertyName)
+Ecmaify(_name_ : LiteralPropertyName)
 
 1. NOTE: Literal property names are canonicalized to double quoted string literals.
 1. Let _v_ be the value of _name_.value escaped for double quotes.
