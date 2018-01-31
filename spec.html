@@ -30,7 +30,7 @@ contributors: Shu-yu Guo, Ecma International
   <pre><code class="language-webidl">
 // Type aliases and enums.
 
-typedef FrozenArray<(SpreadElement or Expression)> Arguments;
+typedef FrozenArray&lt;(SpreadElement or Expression)> Arguments;
 typedef DOMString string;
 typedef string Identifier;
 typedef string IdentifierName;
@@ -49,7 +49,7 @@ enum CompoundAssignmentOperator {
   "/=",
   "%=",
   "**=",
-  "<<=",
+  "&lt;&lt;=",
   ">>=",
   ">>>=",
   "|=",
@@ -104,9 +104,9 @@ enum UpdateOperator {
 // Binary AST delayed assertions
 
 interface AssertedScope {
-  attribute FrozenArray<IdentifierName> varDeclaredNames;
-  attribute FrozenArray<IdentifierName> lexicallyDeclaredNames;
-  attribute FrozenArray<IdentifierName> capturedNames;
+  attribute FrozenArray&lt;IdentifierName&gt; varDeclaredNames;
+  attribute FrozenArray&lt;IdentifierName&gt; lexicallyDeclaredNames;
+  attribute FrozenArray&lt;IdentifierName&gt; capturedNames;
   attribute boolean hasDirectEval;
 };
 
@@ -228,10 +228,10 @@ typedef (AssignmentTargetPattern or
 
 // `FormalParameter`
 typedef (Binding or
-         BindingWithDefault)
+         BindingWithInitializer)
         Parameter;
 
-interface BindingWithDefault : Node {
+interface BindingWithInitializer : Node {
   attribute Binding binding;
   attribute Expression init;
 };
@@ -257,7 +257,7 @@ interface StaticMemberAssignmentTarget : Node {
 // `ArrayBindingPattern`
 interface ArrayBinding : Node {
   // The elements of the array pattern; a null value represents an elision.
-  attribute FrozenArray<(Binding or BindingWithDefault)?> elements;
+  attribute FrozenArray&lt;(Binding or BindingWithInitializer)?&gt; elements;
   attribute Binding? rest;
 };
 
@@ -270,7 +270,7 @@ interface BindingPropertyIdentifier : Node {
 // `BindingProperty :: PropertyName : BindingElement`
 interface BindingPropertyProperty : Node {
   attribute PropertyName name;
-  attribute (Binding or BindingWithDefault) binding;
+  attribute (Binding or BindingWithInitializer) binding;
 };
 
 typedef (BindingPropertyIdentifier or
@@ -278,12 +278,12 @@ typedef (BindingPropertyIdentifier or
         BindingProperty;
 
 interface ObjectBinding : Node {
-  attribute FrozenArray<BindingProperty> properties;
+  attribute FrozenArray&lt;BindingProperty&gt; properties;
 };
 
 // This interface represents the case where the initializer is present in
 // `AssignmentElement :: DestructuringAssignmentTarget Initializer_opt`.
-interface AssignmentTargetWithDefault : Node {
+interface AssignmentTargetWithInitializer : Node {
   attribute AssignmentTarget binding;
   attribute Expression init;
 };
@@ -291,7 +291,7 @@ interface AssignmentTargetWithDefault : Node {
 // `ArrayAssignmentPattern`
 interface ArrayAssignmentTarget : Node {
   // The elements of the array pattern; a null value represents an elision.
-  attribute FrozenArray<(AssignmentTarget or AssignmentTargetWithDefault?)> elements;
+  attribute FrozenArray&lt;(AssignmentTarget or AssignmentTargetWithInitializer?)&gt; elements;
   attribute AssignmentTarget? rest;
 };
 
@@ -304,7 +304,7 @@ interface AssignmentTargetPropertyIdentifier : Node {
 // `AssignmentProperty :: PropertyName : Node`
 interface AssignmentTargetPropertyProperty : Node {
   attribute PropertyName name;
-  attribute (AssignmentTarget or AssignmentTargetWithDefault) binding;
+  attribute (AssignmentTarget or AssignmentTargetWithInitializer) binding;
 };
 
 typedef (AssignmentTargetPropertyIdentifier or
@@ -313,7 +313,7 @@ typedef (AssignmentTargetPropertyIdentifier or
 
 // `ObjectAssignmentPattern`
 interface ObjectAssignmentTarget : Node {
-  attribute FrozenArray<AssignmentTargetProperty> properties;
+  attribute FrozenArray&lt;AssignmentTargetProperty&gt; properties;
 };
 
 
@@ -322,13 +322,13 @@ interface ObjectAssignmentTarget : Node {
 interface ClassExpression : Node {
   attribute BindingIdentifier? name;
   attribute Expression? super;
-  attribute FrozenArray<ClassElement> elements;
+  attribute FrozenArray&lt;ClassElement&gt; elements;
 };
 
 interface ClassDeclaration : Node {
   attribute BindingIdentifier name;
   attribute Expression? super;
-  attribute FrozenArray<ClassElement> elements;
+  attribute FrozenArray&lt;ClassElement&gt; elements;
 };
 
 interface ClassElement : Node {
@@ -341,8 +341,8 @@ interface ClassElement : Node {
 // modules
 
 interface Module : Node {
-  attribute FrozenArray<Directive> directives;
-  attribute FrozenArray<(ImportDeclaration or ExportDeclaration or Statement)> items;
+  attribute FrozenArray&lt;Directive&gt; directives;
+  attribute FrozenArray&lt;(ImportDeclaration or ExportDeclaration or Statement)&gt; items;
 };
 
 // An `ImportDeclaration` not including a namespace import.
@@ -350,7 +350,7 @@ interface Import : Node {
   attribute string moduleSpecifier;
   // `ImportedDefaultBinding`, if present.
   attribute BindingIdentifier? defaultBinding;
-  attribute FrozenArray<ImportSpecifier> namedImports;
+  attribute FrozenArray&lt;ImportSpecifier&gt; namedImports;
 };
 
 // An `ImportDeclaration` including a namespace import.
@@ -375,13 +375,13 @@ interface ExportAllFrom : Node {
 
 // `export ExportClause FromClause;`
 interface ExportFrom : Node {
-  attribute FrozenArray<ExportFromSpecifier> namedExports;
+  attribute FrozenArray&lt;ExportFromSpecifier&gt; namedExports;
   attribute string moduleSpecifier;
 };
 
 // `export ExportClause;`
 interface ExportLocals : Node {
-  attribute FrozenArray<ExportLocalSpecifier> namedExports;
+  attribute FrozenArray&lt;ExportLocalSpecifier&gt; namedExports;
 };
 
 // `export VariableStatement`, `export Declaration`
@@ -504,7 +504,7 @@ interface LiteralStringExpression : Node {
 // `ArrayLiteral`
 interface ArrayExpression : Node {
   // The elements of the array literal; a null value represents an elision.
-  attribute FrozenArray<(SpreadElement or Expression)?> elements;
+  attribute FrozenArray&lt;(SpreadElement or Expression)?&gt; elements;
 };
 
 // `ArrowFunction`,
@@ -599,7 +599,7 @@ interface NewExpression : Node {
 interface NewTargetExpression : Node { };
 
 interface ObjectExpression : Node {
-  attribute FrozenArray<ObjectProperty> properties;
+  attribute FrozenArray&lt;ObjectProperty&gt; properties;
 };
 
 interface UnaryExpression : Node {
@@ -623,7 +623,7 @@ interface TemplateExpression : Node {
   // The contents of the template. This list must be alternating
   // TemplateElements and Expressions, beginning and ending with
   // TemplateElement.
-  attribute FrozenArray<(Expression or TemplateElement)> elements;
+  attribute FrozenArray&lt;(Expression or TemplateElement)&gt; elements;
 };
 
 // `PrimaryExpression :: this`
@@ -710,7 +710,7 @@ interface ForOfStatement : Node {
 };
 
 // `for ( Expression ; Expression ; Expression ) Statement`,
-// `for ( var VariableDeclarationlist ; Expression ; Expression ) Statement`
+// `for ( var VariableDeclarationList ; Expression ; Expression ) Statement`
 interface ForStatement : Node {
   // The expression or declaration before the first `;`, if present.
   attribute (VariableDeclaration or Expression)? init;
@@ -744,7 +744,7 @@ interface ReturnStatement : Node {
 //   `CaseBlock :: { CaseClauses }`.
 interface SwitchStatement : Node {
   attribute Expression discriminant;
-  attribute FrozenArray<SwitchCase> cases;
+  attribute FrozenArray&lt;SwitchCase&gt; cases;
 };
 
 // A `SwitchStatement` whose `CaseBlock` is
@@ -752,11 +752,11 @@ interface SwitchStatement : Node {
 interface SwitchStatementWithDefault : Node {
   attribute Expression discriminant;
   // The `CaseClauses` before the `DefaultClause`.
-  attribute FrozenArray<SwitchCase> preDefaultCases;
+  attribute FrozenArray&lt;SwitchCase&gt; preDefaultCases;
   // The `DefaultClause`.
   attribute SwitchDefault defaultCase;
   // The `CaseClauses` after the `DefaultClause`.
-  attribute FrozenArray<SwitchCase> postDefaultCases;
+  attribute FrozenArray&lt;SwitchCase&gt; postDefaultCases;
 };
 
 interface ThrowStatement : Node {
@@ -795,7 +795,7 @@ interface WithStatement : Node {
 
 interface Block : Node {
   attribute AssertedScope? scope;
-  attribute FrozenArray<Statement> statements;
+  attribute FrozenArray&lt;Statement&gt; statements;
 };
 
 // `Catch`
@@ -810,13 +810,13 @@ interface Directive : Node {
 };
 
 interface FormalParameters : Node {
-  attribute FrozenArray<Parameter> items;
+  attribute FrozenArray&lt;Parameter&gt; items;
   attribute Binding? rest;
 };
 
 interface FunctionBody : Node {
-  attribute FrozenArray<Directive> directives;
-  attribute FrozenArray<Statement> statements;
+  attribute FrozenArray&lt;Directive&gt; directives;
+  attribute FrozenArray&lt;Statement&gt; statements;
 };
 
 // `FunctionDeclaration`,
@@ -832,8 +832,8 @@ interface FunctionDeclaration : Node {
 };
 
 interface Script : Node {
-  attribute FrozenArray<Directive> directives;
-  attribute FrozenArray<Statement> statements;
+  attribute FrozenArray&lt;Directive&gt; directives;
+  attribute FrozenArray&lt;Statement&gt; statements;
 };
 
 interface SpreadElement : Node {
@@ -846,12 +846,12 @@ interface Super : Node { };
 // `CaseClause`
 interface SwitchCase : Node {
   attribute Expression test;
-  attribute FrozenArray<Statement> consequent;
+  attribute FrozenArray&lt;Statement&gt; consequent;
 };
 
 // `DefaultClause`
 interface SwitchDefault : Node {
-  attribute FrozenArray<Statement> consequent;
+  attribute FrozenArray&lt;Statement&gt; consequent;
 };
 
 // `TemplateCharacters`
@@ -861,7 +861,7 @@ interface TemplateElement : Node {
 
 interface VariableDeclaration : Node {
   attribute VariableDeclarationKind kind;
-  [NonEmpty] attribute FrozenArray<VariableDeclarator> declarators;
+  [NonEmpty] attribute FrozenArray&lt;VariableDeclarator&gt; declarators;
 };
 
 interface VariableDeclarator : Node {
@@ -983,19 +983,19 @@ interface VariableDeclarator : Node {
       1. For each _elem_ in _elems_:
           1. Let _n_ be an empty Parse Node.
           1. If _elem_ is *null*, then:
-              1. If _accumulatedElisions_ is empty, then set _accumulatedElisions_ to |Elision| : <emu-t>`,`</emu-t>.
-              1. Else set _accumulatedElisions_ to |Elision| : _accumulatedElisions_ <emu-t>`,`</emu-t>.
+              1. If _accumulatedElisions_ is empty, then set _accumulatedElisions_ to |Elision| : <emu-t>,</emu-t>.
+              1. Else, set _accumulatedElisions_ to |Elision| : _accumulatedElisions_ <emu-t>,</emu-t>.
           1. Else:
               1. If _elem_ is a SpreadElement, then:
                   1. Let _expr_ be AssigmentExpressionEcmaify(_elem_`.expression`).
                   1. Set _n_ to |SpreadElement| : <emu-t>...</emu-t> _expr_.
-              1. Else set _n_ to AssignmentExpressionEcmaify(_elem_).
+              1. Else, set _n_ to AssignmentExpressionEcmaify(_elem_).
               1. If _list_ is empty, then:
                   1. If _accumulatedElisions_ is empty, then set _list_ to |ElementList| : _n_.
-                  1. Else set _list_ to |ElementList| : _accumulatedElisions_ _n_.
+                  1. Else, set _list_ to |ElementList| : _accumulatedElisions_ _n_.
               1. Else:
-                  1. If _accumulatedElisions_ is empty, then set _list_ to |ElementList| : _list_ <emu-t>`,`</emu-t> _n_.
-                  1. Else set _list_ to |ElementList| : _list_ <emu-t>`,`</emu-t> _accumulatedElisions_ _n_.
+                  1. If _accumulatedElisions_ is empty, then set _list_ to |ElementList| : _list_ <emu-t>,</emu-t> _n_.
+                  1. Else, set _list_ to |ElementList| : _list_ <emu-t>,</emu-t> _accumulatedElisions_ _n_.
               1. Set _accumulatedElisions_ to an empty Parse Node.
       1. Return _list_ and _accumulatedElisions_.
     </emu-alg>
@@ -1010,7 +1010,7 @@ interface VariableDeclarator : Node {
       1. For each _param_ in _params_:
           1. Let _n_ be Ecmaify(_param_).
           1. If _list_ is empty, then set _list_ to |FormalParameterList| : _n_.
-          1. Else, set _list_ to |FormalParameterList| : _list_ <emu-t>`,`</emu-t> _n_.
+          1. Else, set _list_ to |FormalParameterList| : _list_ <emu-t>,</emu-t> _n_.
       1. Return _list_.
     </emu-alg>
   </emu-clause>
@@ -1025,11 +1025,11 @@ interface VariableDeclarator : Node {
           1. If _arg_ is a `SpreadElement`, then:
               1. Let _expr_ be AssignmentExpressionEcmaify(_arg_`.expression`).
               1. If _list_ is empty, then set _list_ to |ArgumentList| : <emu-t>...</emu-t> _expr_.
-              1. Else, set _list_ to |ArgumentList| : _list_ <emu-t>`,`</emu-t> _expr_.
+              1. Else, set _list_ to |ArgumentList| : _list_ <emu-t>,</emu-t> _expr_.
           1. Else:
               1. Let _expr_ be AssignmentExpressionEcmaify(_arg_).
               1. If _list_ is empty, then set _list_ to |ArgumentList| : _expr_.
-              1. Else, set _list_ to |ArgumentList| : _list_ <emu-t>`,`</emu-t> _expr_.
+              1. Else, set _list_ to |ArgumentList| : _list_ <emu-t>,</emu-t> _expr_.
       1. Return _list_.
     </emu-alg>
   </emu-clause>
@@ -1045,7 +1045,7 @@ interface VariableDeclarator : Node {
           1. If _prop_ is a `MethodDefinition`, then set _n_ to |PropertyDefinition| : Ecmaify(_prop_).
           1. Else, set _n_ to Ecmaify(_prop_).
           1. If _list_ is empty, then set _list_ to |PropertyDefinitionList| : _n_.
-          1. Else, set _list_ to |PropertyDefinitionList| : _list_ <emu-t>`,`</emu-t> _n_.
+          1. Else, set _list_ to |PropertyDefinitionList| : _list_ <emu-t>,</emu-t> _n_.
       1. Return _list_.
     </emu-alg>
   </emu-clause>
@@ -1057,10 +1057,10 @@ interface VariableDeclarator : Node {
       1. Let _expr_ be ExpressionEcmaify(_case_.test).
       1. Let _clause_ be an empty Parse Node.
       1. If _case_`.consequent` has length 0, then:
-          1. Set _clause_ to |CaseClause| : <emu-t>case</emu-t> _expr_ <emu-t>`:`</emu-t>.
+          1. Set _clause_ to |CaseClause| : <emu-t>case</emu-t> _expr_ <emu-t>:</emu-t>.
       1. Else:
           1. Let _stmts_ be StatementListEcmaify(_case_`.consequent`).
-          1. Set _clause_ to |CaseClause| : <emu-t>case</emu-t> _expr_ <emu-t>`:`</emu-t> _stmts_.
+          1. Set _clause_ to |CaseClause| : <emu-t>case</emu-t> _expr_ <emu-t>:</emu-t> _stmts_.
       1. Return _clause_.
     </emu-alg>
   </emu-clause>
@@ -1071,10 +1071,10 @@ interface VariableDeclarator : Node {
       1. Assert: _case_ is a `SwitchDefault`.
       1. Let _clause_ be an empty Parse Node.
       1. If _case_`.consequent` has length 0, then:
-          1. Set _clause_ to |CaseClause| : <emu-t>default</emu-t> <emu-t>`:`</emu-t>.
+          1. Set _clause_ to |CaseClause| : <emu-t>default</emu-t> <emu-t>:</emu-t>.
       1. Else:
           1. Let _stmts_ be StatementListEcmaify(_case_.consequent).
-          1. Set _clause_ to |CaseClause| : <emu-t>default</emu-t> <emu-t>`:`</emu-t> _stmts_.
+          1. Set _clause_ to |CaseClause| : <emu-t>default</emu-t> <emu-t>:</emu-t> _stmts_.
       1. Return _clause_.
     </emu-alg>
   </emu-clause>
@@ -1097,10 +1097,10 @@ interface VariableDeclarator : Node {
     <h1>ArgumentsEcmaify ( _args_ )</h1>
     <emu-alg>
       1. Assert: _args_ is an `Arguments`.
-      1. If _args_ has length 0, then return |Arguments| : <emu-t>`(`</emu-t> <emu-t>`)`</emu-t>.
+      1. If _args_ has length 0, then return |Arguments| : <emu-t>(</emu-t> <emu-t>)</emu-t>.
       1. Else:
           1. Let _list_ be ArgumentListEcmaify(_call_`.arguments`).
-          1. Return |Arguments| : <emu-t>`(`</emu-t> _list_ <emu-t>`)`</emu-t>.
+          1. Return |Arguments| : <emu-t>(</emu-t> _list_ <emu-t>)</emu-t>.
     </emu-alg>
   </emu-clause>
 
@@ -1111,7 +1111,7 @@ interface VariableDeclarator : Node {
       1. If _e_ is a `ThisExpression`, then return Ecmaify(_e_).
       1. Else if _pn_ is an `IdentifierExpression`, a `Literal`, an `ArrayExpression`, an `ObjectExpression`, a `FunctionExpression`, a `ClassExpression`, a `LiteralRegExpExpression`, or a `TemplateExpression`, then return |PrimaryExpression| : Ecmaify(_e_).
       1. Else:
-          1. Let _parenthesized_ be |ParenthesizedExpression| : <emu-t>`(`</emu-t> ExpressionEcmaify(_e_) <emu-t>`)`</emu-t>.
+          1. Let _parenthesized_ be |ParenthesizedExpression| : <emu-t>(</emu-t> ExpressionEcmaify(_e_) <emu-t>)</emu-t>.
           1. Return |PrimaryExpression| : _parenthesized_.
     </emu-alg>
   </emu-clause>
@@ -1332,14 +1332,103 @@ interface VariableDeclarator : Node {
     </emu-alg>
   </emu-clause>
 
+  <emu-clause id="sec-identifierecmaify" aoid="IdentifierEcmaify">
+    <h1>IdentifierEcmaify ( _ident_ )</h1>
+    <emu-alg>
+      1. Assert: _ident_ is an `Identifier` or an `IdentifierName`.
+      1. NOTE: The full tree of identifiers is elided here and left as an exercise to the reader.
+      1. If _ident_ is the empty string, throw a *SyntaxError* exception.
+      1. Return |Identifier| : _ident_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-labelidentifierecmaify" aoid="LabelIdentifierEcmaify">
+    <h1>LabelIdentifierEcmaify ( _l_ )</h1>
+    <emu-alg>
+      1. Assert: _l_ is a `Label`.
+      1. If _l_ is `"yield"`, then return |LabelIdentifier| : <emu-t>yield</emu-t>.
+      1. Else, if _l_ is `"await"`, then return |LabelIdentifier| : <emu-t>await</emu-t>.
+      1. Else, return |LabelIdentifier| : IdentifierEcmaify(_l_).
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-initializerecmaify" aoid="InitializerEcmaify">
+    <h1>InitializerEcmaify ( _e_ )</h1>
+    <emu-alg>
+      1. Assert: _e_ is an `Expression`.
+      1. Return |Initializer| : <emu-t>=</emu-t> AssignmentExpressionEcmaify(_e_).
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-bindingpropertylistecmaify" aoid="BindingPropertyListEcmaify">
+    <h1>BindingPropertyListEcmaify ( _props_ )</h1>
+    <emu-alg>
+      1. Assert: _props_ is a `FrozenArray&lt;BindingProperty>`.
+      1. Assert: _props_ does not have length 0.
+      1. Let _list_ be an empty Parse Node.
+      1. For each _prop_ in _props_:
+          1. Let _bindingProp_ be Ecmaify(_binding_).
+          1. If _list_ is empty, set _list_ to |BindingPropertyList| : _bindingProp_.
+          1. Else, set _list_ to |BindingPropertyList| : _list_ <emu-t>,</emu-t> _bindingProp_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-bindingelementlistecmaify" aoid="BindingElementListEcmaify">
+    <h1>BindingElementListEcmaify ( _elems_ )</h1>
+    <emu-alg>
+      1. Assert: _elems_ is a `FrozenArray&lt;(Binding or BindingWithInitializer)>`.
+      1. Assert: _elems_ does not have length 0.
+      1. Let _list_ be an empty Parse Node.
+      1. Let _accumulatedElisions_ be an empty Parse Node.
+      1. For each _elem_ in _elems_:
+          1. Let _bindingElem_ be an empty Parse Node.
+          1. If _elem_ is *null*, then:
+              1. If _accumulatedElisions_ is empty, then set _accumulatedElisions_ to |Elision| : <emu-t>,</emu-t>.
+              1. Else, set _accumulatedElisions_ to |Elision| : _accumulatedElisions_ <emu-t>,</emu-t>.
+          1. Else:
+              1. Let _bindingElem_ be |BindingElisionElement| : _accumulatedElisions_ BindingElementEcmaify(_elem_).
+              1. If _list_ is empty, then set _list_ to |BindingElementList| : _bindingElem_.
+              1. Else, set _list_ to |BindingElementList| : _list_ <emu-t>,</emu-t> _bindingElem_.
+              1. Set _accumulatedElisions_ to an empty Parse Node.
+      1. Return _list_ and _accumulatedElisions_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-bindingelementecmaify" aoid="BindingElementEcmaify">
+    <h1>BindingElementEcmaify ( _binding_ )</h1>
+    <emu-alg>
+      1. Assert: _binding_ is a `Binding or BindingWithInitializer`.
+      1. Let _elem0_ be Ecmaify(_binding_).
+      1. If _binding_ is a `BindingWithInitializer`, then return _elem0_.
+      1. Else:
+          1. If _binding_ is a `BindingIdentifier`, then:
+              1. Let _singleNameBinding_ be |SingleNameBinding| : _elem0_.
+              1. Return |BindingElement| : _singleNameBinding_.
+          1. Else:
+              1. Let _bindingPattern_ be |BindingPattern| : _elem0_.
+              1. Return |BindingElement| : _bindingPattern_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-bindingrestelementecmaify" aoid="BindingRestElementEcmaify">
+    <h1>BindingRestElementEcmaify ( _rest_ )</h1>
+    <emu-alg>
+      1. Assert: _rest_ is a `Binding`.
+      1. Let _restBinding_ be Ecmaify(_rest_).
+      1. If _rest_ is a `BindingPattern`, then let _restElem0_ be |BindingPattern| : _restBinding_.
+      1. Else, let _restElem0_ be _restBinding_.
+      1. Return |BindingRestElement| : <emu-t>...</emu-t> _restElem0_.
+    </emu-alg>
+  </emu-clause>
+
   <emu-clause id="sec-ecmaifyscript" aoid="EcmaifyScript">
     <h1>EcmaifyScript ( _s_ )</h1>
     <emu-alg>
       1. Assert: _s_ is a `Script`.
       1. If HasMalformedDirectives(_s_`.directives`, _s_`.statements`) is *false*, throw a *SyntaxError* exception.
       1. Let _dirsStmts_ be _s_`.directives` prepended to _s_`.statements`.
-      1. If _s_`.directives_` has length 0 and _s_`.statements` has length 0, then:
-          1. return |Script| :
+      1. If _s_`.directives` has length 0 and _s_`.statements` has length 0, then:
+          1. return |Script| :.
       1. Else:
           1. Let _dirStmts_ be _s_`.directives` concatenated with _s_`.statements`.
           1. Let _stmts_ be StatementListEcmaify(_dirStmts_).
@@ -1365,7 +1454,7 @@ interface VariableDeclarator : Node {
           1. Let _dirStmts_ be _f_`.directives` concatenated with _f_`.statements`.
           1. Let _stmts_ be StatementListEcmaify(_dirStmts_).
           1. Return |FunctionBody| : _stmts_.
-      1. Else return ExpressionEcmaify(_f_).
+      1. Else, return ExpressionEcmaify(_f_).
     </emu-alg>
   </emu-clause>
 
@@ -1374,7 +1463,7 @@ interface VariableDeclarator : Node {
     <emu-alg>
       1. Assert: _b_ is a `Block`.
       1. Let _stmts_ be StatementListEcmaify(_b_`.statements`).
-      1. Return |Block| : <emu-t>`{`</emu-t> _stmts_ <emu-t>`}`</emu-t>.
+      1. Return |Block| : <emu-t>{</emu-t> _stmts_ <emu-t>}</emu-t>.
     </emu-alg>
   </emu-clause>
 
@@ -1382,8 +1471,8 @@ interface VariableDeclarator : Node {
     <h1>EcmaifyBreakStatement ( _brk_ )</h1>
     <emu-alg>
       1. Assert: _brk_ is a `BreakStatement`.
-      1. If _brk_`.label` is *null*, then return |BreakStatement| : <emu-t>break</emu-t> <emu-t>`;`</emu-t>.
-      1. Else, return |BreakStatement| : <emu-t>break</emu-t> _brk_`.label` <emu-t>`;`</emu-t>.
+      1. If _brk_`.label` is *null*, then return |BreakStatement| : <emu-t>break</emu-t> <emu-t>;</emu-t>.
+      1. Else, return |BreakStatement| : <emu-t>break</emu-t> LabelIdentifierEcmaify(_brk_`.label`) <emu-t>;</emu-t>.
     </emu-alg>
   </emu-clause>
 
@@ -1392,8 +1481,8 @@ interface VariableDeclarator : Node {
     <emu-alg>
       1. Assert: _cont_ is a `ContinueStatement`.
       1. If _cont_`.label` is *null*, then:
-          1. Return |ContinueStatement| : <emu-t>continue</emu-t> <emu-t>`;`</emu-t>.
-      1. Else, return |ContinueStatement| : <emu-t>continue</emu-t> _cont_.label <emu-t>`;`</emu-t>.
+          1. Return |ContinueStatement| : <emu-t>continue</emu-t> <emu-t>;</emu-t>.
+      1. Else, return |ContinueStatement| : <emu-t>continue</emu-t> LabelIdentifierEcmaify(_cont_`.label`) <emu-t>;</emu-t>.
     </emu-alg>
   </emu-clause>
 
@@ -1409,7 +1498,7 @@ interface VariableDeclarator : Node {
     <h1>EcmaifyDebuggerStatement ( _dbg_ )</h1>
     <emu-alg>
       1. Assert: _dbg_ is a `DebuggerStatement`.
-      1. Return |DebuggerStatement| : <emu-t>debugger</emu-t> <emu-t>`;`</emu-t>.
+      1. Return |DebuggerStatement| : <emu-t>debugger</emu-t> <emu-t>;</emu-t>.
     </emu-alg>
   </emu-clause>
 
@@ -1417,7 +1506,7 @@ interface VariableDeclarator : Node {
     <h1>EcmaifyEmptyStatement ( _e_ )</h1>
     <emu-alg>
       1. Assert: _e_ is an `EmptyStatement`.
-      1. Return |EmptyStatement| : <emu-t>`;`</emu-t>.
+      1. Return |EmptyStatement| : <emu-t>;</emu-t>.
     </emu-alg>
   </emu-clause>
 
@@ -1425,7 +1514,7 @@ interface VariableDeclarator : Node {
     <h1>EcmaifyExpressionStatement ( _expr_ )</h1>
     <emu-alg>
       1. Assert: _expr_ is an `ExpressionStatement`.
-      1. Return |ExpressionStatement| : Ecmaify(_expr_`.expression`) <emu-t>`;`</emu-t>.
+      1. Return |ExpressionStatement| : Ecmaify(_expr_`.expression`) <emu-t>;</emu-t>.
     </emu-alg>
   </emu-clause>
 
@@ -1433,16 +1522,17 @@ interface VariableDeclarator : Node {
     <h1>EcmaifyFunctionDeclaration ( _func_ )</h1>
     <emu-alg>
       1. Assert: _func_ is a `FunctionDeclaration`.
+      1. Let _funcName_ be Ecmaify(_func_`.name`).
       1. Let _params_ be Ecmaify(_func_`.params`).
       1. If _func_`.isAsync` is *true*, then:
           1. Let _body_ be |AsyncFunctionBody| : LazyFunctionBodyEcmaify(_func_`.body`).
-          1. Return |AsyncFunctionDeclaration| : <emu-t>async</emu-t> <emu-t>function</emu-t> _func_`.name` <emu-t>`(`</emu-t> _params_ <emu-t>`)`</emu-t> <emu-t>`{`</emu-t> _body_ <emu-t>`}`</emu-t>.
+          1. Return |AsyncFunctionDeclaration| : <emu-t>async</emu-t> <emu-t>function</emu-t> _funcName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
       1. Else, if _func_`.isGenerator` is *true*, then:
           1. Let _body_ be |GeneratorBody| : LazyFunctionBodyEcmaify(_func_`.body`).
-          1. Return |GeneratorDeclaration| : <emu-t>function</emu-t> <emu-t>`*`</emu-t> _func_`.name` <emu-t>`(`</emu-t> _params_ <emu-t>`)`</emu-t> <emu-t>`{`</emu-t> _body_ <emu-t>`}`</emu-t>.
+          1. Return |GeneratorDeclaration| : <emu-t>function</emu-t> <emu-t>`*`</emu-t> _funcName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
       1. Else:
           1. Let _body_ be LazyFunctionBodyEcmaify(_func_`.body`).
-          1. Return |FunctionDeclaration| : <emu-t>function</emu-t> _func_`.name` <emu-t>`(`</emu-t> _params_ <emu-t>`)`</emu-t> <emu-t>`{`</emu-t> _body_ <emu-t>`}`</emu-t>.
+          1. Return |FunctionDeclaration| : <emu-t>function</emu-t> _funcName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
     </emu-alg>
   </emu-clause>
 
@@ -1453,8 +1543,8 @@ interface VariableDeclarator : Node {
       1. Let _test_ be Ecmaify(_if_`.test`).
       1. Let _then_ be Ecmaify(_if_`.consequent`).
       1. If _if_`.alternate` is *null*, then:
-          1. Return |IfStatement| : <emu-t>if</emu-t> <emu-t>`(`</emu-t> _test_ <emu-t>`)`</emu-t> _then_.
-      1. Else, return |IfStatement| : <emu-t>if</emu-t> <emu-t>`(`</emu-t> _test_ <emu-t>`)`</emu-t> _then_ <emu-t>else</emu-t> StatementEcmaify(_if_`.alternate`).
+          1. Return |IfStatement| : <emu-t>if</emu-t> <emu-t>(</emu-t> _test_ <emu-t>)</emu-t> _then_.
+      1. Else, return |IfStatement| : <emu-t>if</emu-t> <emu-t>(</emu-t> _test_ <emu-t>)</emu-t> _then_ <emu-t>else</emu-t> StatementEcmaify(_if_`.alternate`).
     </emu-alg>
   </emu-clause>
 
@@ -1464,7 +1554,7 @@ interface VariableDeclarator : Node {
       1. Assert: _doWhile_ is a `DoWhileStatement`.
       1. Let _test_ be ExpressionEcmaify(_doWhile_`.test`).
       1. Let _body_ be StatementEcmaify(_doWhile_`.body`).
-      1. Return |IterationStatement| : <emu-t>do</emu-t> _body_ <emu-t>while</emu-t> <emu-t>`(`</emu-t> _test_ <emu-t>`)`</emu-t> <emu-t>`;`</emu-t>.
+      1. Return |IterationStatement| : <emu-t>do</emu-t> _body_ <emu-t>while</emu-t> <emu-t>(</emu-t> _test_ <emu-t>)</emu-t> <emu-t>;</emu-t>.
     </emu-alg>
   </emu-clause>
 
@@ -1473,11 +1563,15 @@ interface VariableDeclarator : Node {
     <emu-alg>
       1. Assert: _forIn_ is a `ForInStatement`.
       1. Let _left_ be an empty Parse Node.
-      1. If _forIn_`.left` is a ForInOfBinding, then set _left_ to Ecmaify(_forIn_`.left`).
-      1. Else, set _left_ to LeftHandSideExpressionEcmaify(_forIn_`.left`).
       1. Let _right_ be AssignmentExpressionEcmaify(_forIn_`.right`).
       1. Let _body_ be StatementEcmaify(_forIn_`.body`).
-      1. Return |IterationStatement| : <emu-t>for</emu-t> <emu-t>`(`</emu-t> _left_ <emu-t>in</emu-t> _right_ <emu-t>`)`</emu-t> _body_.
+      1. If _forIn_`.left` is a `ForInOfBinding`, then:
+          1. If _forIn_`.left.kind` is `"var"`, then:
+              1. Let _varBinding_ be |ForBinding| : Ecmaify(_forIn_`.left.binding`).
+              1. Return |IterationStatement| : <emu-t>for</emu-t> <emu-t>(</emu-t> <emu-t>var</emu-t> _varBinding_ <emu-t>in</emu-t> _right_ <emu-t>)</emu-t> _body_.
+          1. Else, set _left_ to Ecmaify(_forIn_`.left`).
+      1. Else, set _left_ to LeftHandSideExpressionEcmaify(_forIn_`.left`).
+      1. Return |IterationStatement| : <emu-t>for</emu-t> <emu-t>(</emu-t> _left_ <emu-t>in</emu-t> _right_ <emu-t>)</emu-t> _body_.
     </emu-alg>
   </emu-clause>
 
@@ -1486,11 +1580,15 @@ interface VariableDeclarator : Node {
     <emu-alg>
       1. Assert: _forOf_ is a `ForOfStatement`.
       1. Let _left_ be an empty Parse Node.
-      1. If _forOf_`.left` is a ForInOfBinding, then set _left_ to Ecmaify(_forOf_`.left`).
-      1. Else, set _left_ to LeftHandSideExpressionEcmaify(_forOf_`.left`).
       1. Let _right_ be AssignmentExpressionEcmaify(_forOf_`.right`).
       1. Let _body_ be StatementEcmaify(_forOf_`.body`).
-      1. Return |IterationStatement| : <emu-t>for</emu-t> <emu-t>`(`</emu-t> _left_ <emu-t>of</emu-t> _right_ <emu-t>`)`</emu-t> _body_.
+      1. If _forOf_`.left` is a `ForInOfBinding`, then:
+          1. If _forOf_`.left.kind` is `"var"`, then:
+              1. Let _varBinding_ be |ForBinding| : Ecmaify(_forOf_`.left.binding`).
+              1. Return |IterationStatement| : <emu-t>for</emu-t> <emu-t>(</emu-t> <emu-t>var</emu-t> _varBinding_ <emu-t>of</emu-t> _right_ <emu-t>)</emu-t> _body_.
+          1. Else, set _left_ to Ecmaify(_forOf_`.left`).
+      1. Else, set _left_ to LeftHandSideExpressionEcmaify(_forOf_`.left`).
+      1. Return |IterationStatement| : <emu-t>for</emu-t> <emu-t>(</emu-t> _left_ <emu-t>of</emu-t> _right_ <emu-t>)</emu-t> _body_.
     </emu-alg>
   </emu-clause>
 
@@ -1499,15 +1597,17 @@ interface VariableDeclarator : Node {
     <emu-alg>
       1. Assert: _for_ is a `ForStatement`.
       1. Let _init_, _test_, and _update_ be empty Parse Nodes.
-      1. If _for_`.init` is not *null*, then:
-          1. If _for_`.init` is a `VariableDeclaration`, then:
-              1. If _for_`.init.kind` is `"var"`, then set _init_ to the partial Parse Node <emu-t>var</emu-t> VariableDeclarationEcmaify(_for_`.init.declarators`).
-              1. Else set _init_ to |LexicalDeclaration| : Ecmaify(_for_`.init.kind`) BindingListEcmaify(_for_`.init.declarators`).
-          1. Else set _init_ to LeftHandSideExpressionEcmaify(_for_`.init`).
       1. If _for_`.test` is not null, then set _test_ to ExpressionEcmaify(_for_`.test`).
       1. If _for_`.update` is not null, then set _update_ to ExperssionEcmaify(_for_`.test`).
       1. Let _body_ be StatementEcmaify(_for_`.body`).
-      1. Return |IterationStatement| : <emu-t>for</emu-t> <emu-t>`(`</emu-t> _init_ <emu-t>`;`</emu-t> _test_ <emu-t>`;`</emu-t> _update_ <emu-t>`)`</emu-t> _body_.
+      1. If _for_`.init` is not *null*, then:
+          1. If _for_`.init` is a `VariableDeclaration`, then:
+              1. If _for_`.init.kind` is `"var"`, then:
+                  1. Let _varDecls_ be VariableDeclarationListEcmaify(_for_`.init.declarators`).
+                  1. Return |IterationStatement| : <emu-t>for</emu-t> <emu-t>(</emu-t> <emu-t>var</emu-t> _varDecls_ <emu-t>;</emu-t> _test_ <emu-t>;</emu-t> _update_ <emu-t>)</emu-t> _body_.
+              1. Else, set _init_ to |LexicalDeclaration| : Ecmaify(_for_`.init.kind`) BindingListEcmaify(_for_`.init.declarators`).
+          1. Else, set _init_ to LeftHandSideExpressionEcmaify(_for_`.init`).
+      1. Return |IterationStatement| : <emu-t>for</emu-t> <emu-t>(</emu-t> _init_ <emu-t>;</emu-t> _test_ <emu-t>;</emu-t> _update_ <emu-t>)</emu-t> _body_.
     </emu-alg>
   </emu-clause>
 
@@ -1517,7 +1617,7 @@ interface VariableDeclarator : Node {
       1. Assert: _while_ is a `WhileStatement`.
       1. Let _test_ be ExpressionEcmaify(_while_`.test`).
       1. Let _body_ be StatementEcmaify(_while_`.body`).
-      1. Return |IterationStatement| : <emu-t>while</emu-t> <emu-t>`(`</emu-t> _test_ <emu-t>`)`</emu-t> _body_.
+      1. Return |IterationStatement| : <emu-t>while</emu-t> <emu-t>(</emu-t> _test_ <emu-t>)</emu-t> _body_.
     </emu-alg>
   </emu-clause>
 
@@ -1527,11 +1627,11 @@ interface VariableDeclarator : Node {
       1. Assert _labelled_ is a `LabelledStatement`.
       1. Let _body_ be an empty Parse Node.
       1. If _labelled_`.body` is a `FunctionDeclaration`, then:
-          1. If _labelled_`.body.isAsync` is true or _labelled_`.body.isGenerator` is true, then throw a *SyntaxError* exception.
+          1. If _labelled_`.body.isAsync` is true or _labelled_`.body.isGenerator` is *true*, then throw a *SyntaxError* exception.
           1. Set _body_ to Ecmaify(_labelled_`.body`).
       1. Else, set _body_ to StatementEcmaify(_labelled_`.body`).
       1. Let _item_ be |LabelledItem| : _body_.
-      1. Return |LabelledStatement| : _labelled_`.label` <emu-t>`:`</emu-t> _item_.
+      1. Return |LabelledStatement| : LabelIdentifierEcmaify(_labelled_`.label`) <emu-t>:</emu-t> _item_.
     </emu-alg>
   </emu-clause>
 
@@ -1540,7 +1640,7 @@ interface VariableDeclarator : Node {
     <emu-alg>
       1. Assert: _ret_ is a `ReturnStatement`.
       1. If _ret_`.expression` is *null*, then:
-          1. Return |ReturnStatement| : <emu-t>return</emu-t> <emu-t>`;`</emu-t>.
+          1. Return |ReturnStatement| : <emu-t>return</emu-t> <emu-t>;</emu-t>.
       1. Else, return |ReturnStatement| : <emu-t>return</emu-t> ExpressionEcmaify(_ret_`.expression`).
     </emu-alg>
   </emu-clause>
@@ -1551,11 +1651,11 @@ interface VariableDeclarator : Node {
       1. Assert: _switch_ is a `SwitchStatement`.
       1. Let _expr_ be ExpressionEcmaify(_switch_`.discriminant`).
       1. Let _block_ be an empty Parse Node.
-      1. If _switch_`.cases` has length 0, then set _block_ to |CaseBlock| : <emu-t>`{`</emu-t> <emu-t>`}`</emu-t>.
+      1. If _switch_`.cases` has length 0, then set _block_ to |CaseBlock| : <emu-t>{</emu-t> <emu-t>}</emu-t>.
       1. Else:
           1. Let _clauses_ be CaseClausesEcmaify(_switch_`.cases`).
-          1. Set _block_ to |CaseBlock| : <emu-t>`{`</emu-t> _clauses_ <emu-t>`}`</emu-t>.
-      1. Return |SwitchStatement| : <emu-t>switch</emu-t> <emu-t>`(`</emu-t> _expr_ <emu-t>`)`</emu-t> _block_.
+          1. Set _block_ to |CaseBlock| : <emu-t>{</emu-t> _clauses_ <emu-t>}</emu-t>.
+      1. Return |SwitchStatement| : <emu-t>switch</emu-t> <emu-t>(</emu-t> _expr_ <emu-t>)</emu-t> _block_.
     </emu-alg>
   </emu-clause>
 
@@ -1568,18 +1668,18 @@ interface VariableDeclarator : Node {
       1. Let _block_ be an empty Parse Node.
       1. If _switch_`.preDefaultCases` has length 0, then:
           1. If _switch_`.postDefaultCases` has length 0, then:
-              1. Set _block_ to |CaseBlock| : <emu-t>`{`</emu-t> _defaultClause_ <emu-t>`}`</emu-t>.
+              1. Set _block_ to |CaseBlock| : <emu-t>{</emu-t> _defaultClause_ <emu-t>}</emu-t>.
           1. Else:
               1. Let _postDefaultClauses_ be CaseClausesEcmaify(_switch_`.postDefaultCases`).
-              1. Set _block_ to |CaseBlock| : <emu-t>`{`</emu-t> _defaultClause_ _postDefaultClauses_ <emu-t>`}`</emu-t>.
+              1. Set _block_ to |CaseBlock| : <emu-t>{</emu-t> _defaultClause_ _postDefaultClauses_ <emu-t>}</emu-t>.
       1. Else if _switch_`.postDefaultCases` has length 0, then:
           1. Let _preDefaultClauses_ be CaseClausesEcmaify(_switch_`.preDefaultCases`).
-          1. Set _block_ to |CaseBlock| : <emu-t>`{`</emu-t> _preDefaultClauses_ _defaultClause_ <emu-t>`}`</emu-t>
+          1. Set _block_ to |CaseBlock| : <emu-t>{</emu-t> _preDefaultClauses_ _defaultClause_ <emu-t>}</emu-t>
       1. Else:
           1. Let _preDefaultClauses_ be CaseClausesEcmaify(_switch_`.preDefaultCases`).
           1. Let _postDefaultClauses_ be CaseClausesEcmaify(_switch_`.postDefaultCases`).
-          1. Set _block_ to |CaseBlock| : <emu-t>`{`</emu-t> _preDefaultClauses_ _defaultClause_ _postDefaultClauses_ <emu-t>`}`</emu-t>.
-      1. Return |SwitchStatement| : <emu-t>switch</emu-t> <emu-t>`(`</emu-t> _expr_ <emu-t>`)`</emu-t> _block_.
+          1. Set _block_ to |CaseBlock| : <emu-t>{</emu-t> _preDefaultClauses_ _defaultClause_ _postDefaultClauses_ <emu-t>}</emu-t>.
+      1. Return |SwitchStatement| : <emu-t>switch</emu-t> <emu-t>(</emu-t> _expr_ <emu-t>)</emu-t> _block_.
     </emu-alg>
   </emu-clause>
 
@@ -1614,13 +1714,27 @@ interface VariableDeclarator : Node {
           1. Return |TryStatement| : <emu-t>try</emu-t> _block_ _catch_ _finally_.
   </emu-clause>
 
+  <emu-clause id="sec-ecmaifyvariabledeclaration" aoid="EcmaifyVariableDeclaration">
+    <h1>EcmaifyVariableDeclaration ( _decl_ )</h1>
+    <emu-alg>
+      1. Assert: _decl_ is a `VariableDeclaration`.
+      1. If _decl_`.kind` is `"var"`, then:
+          1. Let _varDecls_ be VariableDeclarationListEcmaify(_decl_`.declarators`).
+          1. Return |VariableStatement| : <emu-t>var</emu-t> _varDecls_ <emu-t>;</emu-t>.
+      1. Else:
+          1. Let _letOrConst_ be Ecmaify(_decl_`.kind`).
+          1. Let _lexDecls_ be BindingListEcmaify(_decl_`.declarators`).
+          1. Return |LexicalDeclaration| : _letOrConst_ _lexDecls_ <emu-t>;</emu-t>.
+    </emu-alg>
+  </emu-clause>
+
   <emu-clause id="sec-ecmaifywithstatement" aoid="EcmaifyWithStatement">
     <h1>EcmaifyWithStatement ( _with_ )</h1>
     <emu-alg>
       1. Assert: _with_ is a `WithStatement`.
       1. Let _expr_ be ExpressionEcmaify(_with_`._object`).
       1. Let _body_ be StatementEcmaify(_with_`.body`).
-      1. Return |WithStatement| : <emu-t>with</emu-t> <emu-t>`(`</emu-t> _expr_ <emu-t>`)`</emu-t> _body_.
+      1. Return |WithStatement| : <emu-t>with</emu-t> <emu-t>(</emu-t> _expr_ <emu-t>)</emu-t> _body_.
     </emu-alg>
   </emu-clause>
 
@@ -1683,7 +1797,7 @@ interface VariableDeclarator : Node {
     <emu-alg>
       1. Assert: _litStr_ is a `LiteralStringExpression`.
       1. Let _v_ be the value of _litStr_`.value` escaped for double quotes.
-      1. Let _l_ be |StringLiteral| : <emu-t>&#34;</emu-t> _v_ <emu-t>&#34;</emu-t>.
+      1. Let _l_ be |StringLiteral| : <emu-t>"</emu-t> _v_ <emu-t>"</emu-t>.
       1. Return |Literal| : _l_.
     </emu-alg>
   </emu-clause>
@@ -1691,16 +1805,17 @@ interface VariableDeclarator : Node {
   <emu-clause id="sec-ecmaifyarrayexpression" aoid="EcmaifyArrayExpression">
     <h1>EcmaifyArrayExpression ( _litArray_ )</h1>
     <emu-alg>
-      1. Assert: _litArray_ is an `ArrayExpression`.
+      1. Assert: _litArray_ is an `ArrayExpression` or an `ArrayAssignmentTarget`.
+      1. NOTE: While Binary AST distinguishes between array literals used as right-hand side expressions and used as left-hand side expressions, the ECMAScript lexical grammar deals this via a cover grammar and reparsing. While it is preferable to transform `ArrayAssignmentTarget` directly to |ArrayAssignmentPattern|, doing so would require changing the ECMAScript spec to consume that production without reparsing.
       1. If _litArray_`.elements` has length 0, then:
-          1. Return |ArrayLiteral| : <emu-t>`[`</emu-t> <emu-t>`]`</emu-t>.
+          1. Return |ArrayLiteral| : <emu-t>[</emu-t> <emu-t>]</emu-t>.
       1. Let and _elementList_ and _elisions_ be the results of ElementListEcmaify(_litArray_`.elements`).
       1. If _elementList_ is empty:
           1. Assert: _elisions_ is not empty.
-          1. Return |ArrayLiteral| : <emu-t>`[`</emu-t> _elisions_ <emu-t>`]`</emu-t>.
+          1. Return |ArrayLiteral| : <emu-t>[</emu-t> _elisions_ <emu-t>]</emu-t>.
       1. Else:
-          1. If _elisions_ is empty, then return |ArrayLiteral| : <emu-t>`[`</emu-t> _elementList_ <emu-t>`]`</emu-t>.
-          1. Else return |ArrayLiteral| : <emu-t>`[`</emu-t> _elementList_ <emu-t>`,`</emu-t> _elisions_ <emu-t>`]`</emu-t>.
+          1. If _elisions_ is empty, then return |ArrayLiteral| : <emu-t>[</emu-t> _elementList_ <emu-t>]</emu-t>.
+          1. Else, return |ArrayLiteral| : <emu-t>[</emu-t> _elementList_ <emu-t>,</emu-t> _elisions_ <emu-t>]</emu-t>.
     </emu-alg>
   </emu-clause>
 
@@ -1710,16 +1825,16 @@ interface VariableDeclarator : Node {
       1. NOTE: Arrow expressions are canonicalized to use parenthesized parameters and braced bodies.
       1. Assert: _litArrow_ is an `ArrowExpression`.
       1. Let _params0_ be |UniqueFormalParameters| : Ecmaify(_litArrow_`.params`).
-      1. Let _params_ be |ArrowFormalParameters| : <emu-t>`(`</emu-t> _params0_ <emu-t>`(`</emu-t>.
+      1. Let _params_ be |ArrowFormalParameters| : <emu-t>(</emu-t> _params0_ <emu-t>)</emu-t>.
       1. Let _lazyBody_ be LazyFunctionBodyEcmaify(_litArrow_`.body`).
       1. If _litArrow_`.isAsync` is *true*, then:
           1. Let _asyncHead_ be |AsyncArrowHead| : <emu-t>async</emu-t> _params_.
           1. Let _asyncBody0_ be |AsyncFunctionBody| : _lazyBody_.
-          1. Let _asyncBody_ be |AsyncConciseBody| : <emu-t>`{`</emu-t> _asyncBody0_ <emu-t>`}`</emu-t>.
-          1. Return |AsyncArrowFunction| : _asyncHead_ <emu-t>`=&gt;`</emu-t> _asyncBody_.
+          1. Let _asyncBody_ be |AsyncConciseBody| : <emu-t>{</emu-t> _asyncBody0_ <emu-t>}</emu-t>.
+          1. Return |AsyncArrowFunction| : _asyncHead_ <emu-t>=&gt;</emu-t> _asyncBody_.
       1. Else:
-          1. Let _body_ be |ConciseBody| : <emu-t>`{`</emu-t> _lazyBody_ <emu-t>`}`</emu-t>.
-          1. Return |ArrowFunction| : _params_ <emu-t>`=&gt;`</emu-t> _body_.
+          1. Let _body_ be |ConciseBody| : <emu-t>{</emu-t> _lazyBody_ <emu-t>}</emu-t>.
+          1. Return |ArrowFunction| : _params_ <emu-t>=&gt;</emu-t> _body_.
     </emu-alg>
   </emu-clause>
 
@@ -1729,7 +1844,7 @@ interface VariableDeclarator : Node {
       1. Assert: _assign_ is an `AssignmentExpression`.
       1. Let _lhs_ be LeftHandSideExpressionEcmaify(_assign_`.binding`).
       1. Let _rhs_ be AssignmentExpressionEcmaify(_assign_`.expression`).
-      1. Return |AssignmentExpression| : _lhs_ <emu-t>`=`</emu-t> _rhs_.
+      1. Return |AssignmentExpression| : _lhs_ <emu-t>=</emu-t> _rhs_.
     </emu-alg>
   </emu-clause>
 
@@ -1740,61 +1855,61 @@ interface VariableDeclarator : Node {
       1. If _bin_`.operator` is `","`, then:
           1. Let _left_ be ExpressionEcmaify(_bin_`.left`).
           1. Let _right_ be AssignmentExpressionEcmaify(_bin_`.right`).
-          1. Return |Expression| : _left_ <emu-t>`,`</emu-t> _right_.
+          1. Return |Expression| : _left_ <emu-t>,</emu-t> _right_.
       1. Else, if _bin_`.operator` is `"||"`, then:
           1. Let _left_ be LogicalOREcmaify(_bin_`.left`).
           1. Let _right_ be LogicalANDEcmaify(_bin_`.right`).
-          1. Return |LogicalORExpression| : _left_ <emu-t>`||`</emu-t> _right_.
+          1. Return |LogicalORExpression| : _left_ <emu-t>||</emu-t> _right_.
       1. Else, if _bin_`.operator` is `"&&"`, then:
           1. Let _left_ be LogicalANDEcmaify(_bin_`.left`).
           1. Let _right_ be BitwiseOREcmaify(_bin_`.right`).
-          1. Return |LogicalANDExpression| : _left_ <emu-t>`&&`</emu-t> _right_.
+          1. Return |LogicalANDExpression| : _left_ <emu-t>&&</emu-t> _right_.
       1. Else, if _bin_`.operator` is `"|"`, then:
           1. Let _left_ be BitwiseOREcmaify(_bin_`.left`).
           1. Let _right_ be BitwiseXOREcmaify(_bin_`.right`).
-          1. Return |BitwiseORExpression| : _left_ <emu-t>`&#124;`</emu-t> _right_.
+          1. Return |BitwiseORExpression| : _left_ <emu-t>`|`</emu-t> _right_.
       1. Else, if _bin_`.operator` is `"^"`, then:
           1. Let _left_ be BitwiseXOREcmaify(_bin_`.left`).
           1. Let _right_ be BitwiseANDEcmaify(_bin_`.right`).
-          1. Return |BitwiseXORExpression| : _left_ <emu-t>`^`</emu-t> _right_.
+          1. Return |BitwiseXORExpression| : _left_ <emu-t>^</emu-t> _right_.
       1. Else, if _bin_`.operator` is `"&"`, then:
           1. Let _left_ be BitwiseANDEcmaify(_bin_`.left`).
           1. Let _right_ be EqualityExpressionEcmaify(_bin_`.right`).
-          1. Return |BitwiseANDExpression| : _left_ <emu-t>`&`</emu-t> _right_.
+          1. Return |BitwiseANDExpression| : _left_ <emu-t>&</emu-t> _right_.
       1. Else, if _bin_`.operator` is `"=="`, `"!="`, `"==="`, or `"!=="`, then:
           1. Let _left_ be EqualityExpressionEcmaify(_bin_`.left`).
           1. Let _right_ be RelationalExpressionEcmaify(_bin_`.right`).
-          1. If _bin_`.operator` is `"=="`, then return |EqualityExpression| : _left_ <emu-t>`==`</emu-t> _right_.
-          1. Else, if _bin_`.operator` is `"!="`, then return |EqualityExpression| : _left_ <emu-t>`!=`</emu-t> _right_.
-          1. Else, if _bin_`.operator` is `"==="`, then return |EqualityExpression| : _left_ <emu-t>`===`</emu-t> _right_.
-          1. Else return |EqualityExpression| : _left_ <emu-t>`!==`</emu-t> _right_.
+          1. If _bin_`.operator` is `"=="`, then return |EqualityExpression| : _left_ <emu-t>==</emu-t> _right_.
+          1. Else, if _bin_`.operator` is `"!="`, then return |EqualityExpression| : _left_ <emu-t>!=</emu-t> _right_.
+          1. Else, if _bin_`.operator` is `"==="`, then return |EqualityExpression| : _left_ <emu-t>===</emu-t> _right_.
+          1. Else, return |EqualityExpression| : _left_ <emu-t>!==</emu-t> _right_.
       1. Else, if _bin_`.operator` is `"<"`, `">"`, `"<="`, `">="`, `"instanceof"`, or `"in"`, then:
           1. Let _left_ be RelationExpressionEcmaify(_bin_`.left`).
           1. Let _right_ be ShiftExpressionEcmaify(_bin_`.right`).
-          1. If _bin_`.operator` is `"<"` return |RelationalExpression| : _left_ <emu-t>`&lt;`</emu-t> _right_.
-          1. Else, if _bin_`.operator` is `">"`, then return |RelationalExpression| : _left_ <emu-t>`&gt;`</emu-t> _right_.
-          1. Else, if _bin_`.operator` is `"<="` return |RelationalExpression| : _left_ <emu-t>`&lt;=`</emu-t> _right_.
-          1. Else, if _bin_`.operator` is `">="`, then return |RelationalExpression| : _left_ <emu-t>`&gt;=`</emu-t> _right_.
-          1. Else, if _bin_`.operator` is `"instanceof"`, then return |RelationalExpression| : _left_ <emu-t>`instanceof`</emu-t> _right_.
-          1. Else return |RelationalExpression| : _left_ <emu-t>in</emu-t> _right_.
+          1. If _bin_`.operator` is `"<"` return |RelationalExpression| : _left_ <emu-t>&lt;</emu-t> _right_.
+          1. Else, if _bin_`.operator` is `">"`, then return |RelationalExpression| : _left_ <emu-t>&gt;</emu-t> _right_.
+          1. Else, if _bin_`.operator` is `"<="` return |RelationalExpression| : _left_ <emu-t>&lt;=</emu-t> _right_.
+          1. Else, if _bin_`.operator` is `">="`, then return |RelationalExpression| : _left_ <emu-t>&gt;=</emu-t> _right_.
+          1. Else, if _bin_`.operator` is `"instanceof"`, then return |RelationalExpression| : _left_ <emu-t>instanceof</emu-t> _right_.
+          1. Else, return |RelationalExpression| : _left_ <emu-t>in</emu-t> _right_.
       1. Else, if _bin_`.operator` is `"<<"`, `">>"`, or `">>>"`, then:
           1. Let _left_ be ShiftExpressionEcmaify(_bin_`.left`).
           1. Let _right_ be AdditiveExpressionEcmaify(_bin_`.right`).
-          1. If _bin_`.operator` is `"<<"`, then return |ShiftExpression| : _left_ <emu-t>`&lt;&lt;`</emu-t> _right_.
-          1. Else, if _bin_`.operator` is `">>"`, then return |ShiftExpression| : _left_ <emu-t>`&gt;&gt;`</emu-t> _right_.
-          1. Else return |ShiftExpression| : _left_ <emu-t>`&gt;&gt;&gt;`</emu-t> _right_.
+          1. If _bin_`.operator` is `"<<"`, then return |ShiftExpression| : _left_ <emu-t>&lt;&lt;</emu-t> _right_.
+          1. Else, if _bin_`.operator` is `">>"`, then return |ShiftExpression| : _left_ <emu-t>&gt;&gt;</emu-t> _right_.
+          1. Else, return |ShiftExpression| : _left_ <emu-t>&gt;&gt;&gt;</emu-t> _right_.
       1. Else, if _bin_`.operator` is `"+"` or `"-"`, then:
           1. Let _left_ be AdditiveExpressionEcmaify(_bin_`.left`).
           1. Let _right_ be MultiplicativeExpressionEcmaify(_bin_`.right`).
-          1. If _bin_`.operator` is `"+"`, then return |AdditiveExpression| : _left_ <emu-t>`+`</emu-t> _right_.
-          1. Else return |AdditiveExpression| : _left_ <emu-t>`-`</emu-t> _right_.
+          1. If _bin_`.operator` is `"+"`, then return |AdditiveExpression| : _left_ <emu-t>+</emu-t> _right_.
+          1. Else, return |AdditiveExpression| : _left_ <emu-t>-</emu-t> _right_.
       1. Else, if _bin_`.operator` is `"*"`, `"/"`, or `"%"`, then:
           1. Let _left_ be MultiplicativeExpressionEcmaify(_bin_`.left`).
           1. Let _right_ be ExponentationExpressionEcmaify(_bin_`.right`).
           1. Let _op_ be an empty Parse Node.
           1. If _bin_`.operator` is `"*"`, then set _op_ to |MultiplicativeOperator| : <emu-t>`*`</emu-t>
-          1. Else, if _bin_`.operator` is `"/"`, then set _op_ to |MultiplicativeOperator| : <emu-t>`/`</emu-t>.
-          1. Else, if _bin_`.operator` is `"%"`, then set _op_ to |MultiplicativeOperator| : <emu-t>`%`</emu-t>.
+          1. Else, if _bin_`.operator` is `"/"`, then set _op_ to |MultiplicativeOperator| : <emu-t>/</emu-t>.
+          1. Else, if _bin_`.operator` is `"%"`, then set _op_ to |MultiplicativeOperator| : <emu-t>%</emu-t>.
           1. Return |MultiplicativeExpression| : _left_ _op_ _right_.
       1. Else:
           1. Let _left_ be UpdateExpressionEcmaify(_bin_`.left`).
@@ -1825,7 +1940,7 @@ interface VariableDeclarator : Node {
       1. Let _lhs_ be LeftHandSideExpressionEcmaify(_assign_`.binding`)
       1. Let _rhs_ be AssignmentExpressionEcmaify(_assign_`.expression`).
       1. Let _op_ be an empty Parse Node.
-      1. If _assign_`.operator` is `"|="` then set _op_ to |AssignmentOperator| : <emu-t>&#42;=</emu-t>.
+      1. If _assign_`.operator` is `"|="` then set _op_ to |AssignmentOperator| : <emu-t>|=</emu-t>.
       1. Else, if _assign_`.operator` is `"/="` then set _op_ to |AssignmentOperator| : <emu-t>/=</emu-t>.
       1. Else, if _assign_`.operator` is `"%="` then set _op_ to |AssignmentOperator| : <emu-t>%=</emu-t>.
       1. Else, if _assign_`.operator` is `"+="` then set _op_ to |AssignmentOperator| : <emu-t>+=</emu-t>.
@@ -1844,14 +1959,14 @@ interface VariableDeclarator : Node {
   <emu-clause id="sec-ecmaifycomputedmemberexpression" aoid="EcmaifyComputedMemberExpression">
     <h1>EcmaifyComputedMemberExpression ( _getelem_ )</h1>
     <emu-alg>
-      1. Assert: _getelem_ is a `ComputedMemberExpression`.
+      1. Assert: _getelem_ is a `ComputedMemberExpression` or an `ComputedMemberAssignmentTarget`.
       1. Let _expr_ be ExpressionEcmaify(_getelem_`.expression`).
       1. If _getelem_`._object` is a `Super`, then:
-          1. Let _superProp_ be |SuperProperty| : <emu-t>super</emu-t> <emu-t>`[`</emu-t> _expr_ <emu-t>`]`</emu-t>.
+          1. Let _superProp_ be |SuperProperty| : <emu-t>super</emu-t> <emu-t>[</emu-t> _expr_ <emu-t>]</emu-t>.
           1. Return |MemberExpression| : _superProp_.
       1. Else:
           1. Let _base_ be MemberExpressionEcmaify(_getelem_`._object`).
-          1. Return |MemberExpression| : _base_ <emu-t>`[`</emu-t> _expr_ <emu-t>`]`</emu-t>.
+          1. Return |MemberExpression| : _base_ <emu-t>[</emu-t> _expr_ <emu-t>]</emu-t>.
     </emu-alg>
   </emu-clause>
 
@@ -1862,7 +1977,7 @@ interface VariableDeclarator : Node {
       1. Let _test_ be LogicalORExpressionEcmaify(_hook_`.test`).
       1. Let _then_ be AssignmentExpressionEcmaify(_hook_`.consequent`).
       1. Let _else_ be AssignmentExpressionEcmaify(_hook_`.alternate`).
-      1. Return |ConditionalExpression| : _test_ <emu-t>?</emu-t> _then_ <emu-t>`:`</emu-t> _else_.
+      1. Return |ConditionalExpression| : _test_ <emu-t>?</emu-t> _then_ <emu-t>:</emu-t> _else_.
     </emu-alg>
   </emu-clause>
 
@@ -1878,29 +1993,28 @@ interface VariableDeclarator : Node {
     <h1>EcmaifyFunctionExpression ( _func_ )</h1>
     <emu-alg>
       1. Assert: _func_ is a `FunctionExpression`.
+      1. Let _maybeFuncName_ be an empty Parse Node.
+      1. If _func_`.name` not *null*, then set _maybeFuncName_ to Ecmaify(_func_`.name`).
       1. Let _params_ be Ecmaify(_func_`.params`).
       1. If _func_`.isAsync` is *true*, then:
           1. Let _body_ be |AsyncFunctionBody| : LazyFunctionBodyEcmaify(_func_`.body`).
-          1. Return |AsyncFunctionExpression| : <emu-t>async</emu-t> <emu-t>function</emu-t> _func_`.name` <emu-t>`(`</emu-t> _params_ <emu-t>`)`</emu-t> <emu-t>`{`</emu-t> _body_ <emu-t>`}`</emu-t>.
+          1. Return |AsyncFunctionExpression| : <emu-t>async</emu-t> <emu-t>function</emu-t> _maybeFuncName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
       1. Else, if _func_`.isGenerator` is *true*, then:
           1. Let _body_ be |GeneratorBody| : LazyFunctionBodyEcmaify(_func_`.body`).
-          1. Return |GeneratorExpression| : <emu-t>function</emu-t> <emu-t>`*`</emu-t> _func_`.name` <emu-t>`(`</emu-t> _params_ <emu-t>`)`</emu-t> <emu-t>`{`</emu-t> _body_ <emu-t>`}`</emu-t>.
+          1. Return |GeneratorExpression| : <emu-t>function</emu-t> <emu-t>`*`</emu-t> _maybeFuncName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
       1. Else:
           1. Let _body_ be LazyFunctionBodyEcmaify(_func_`.body`).
-          1. Return |FunctionExpression| : <emu-t>function</emu-t> _func_`.name` <emu-t>`(`</emu-t> _params_ <emu-t>`)`</emu-t> <emu-t>`{`</emu-t> _body_ <emu-t>`}`</emu-t>.
+          1. Return |FunctionExpression| : <emu-t>function</emu-t> _maybeFuncName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
     </emu-alg>
   </emu-clause>
 
   <emu-clause id="sec-ecmaifyidentifierexpression" aoid="EcmaifyIdentifierExpression">
     <h1>EcmaifyIdentifierExpression ( _ident_ )</h1>
     <emu-alg>
-      1. Assert: _ident_ is an `IdentifierExpression`.
-      1. If _ident_`.name` is the empty string, throw a *SyntaxError* exception.
-      1. If _ident_`.name` is "yield", then return |IdentifierReference| : <emu-t>yield</emu-t>.
-      1. If _ident_`.name` is "await", then return |IdentifierReference| : <emu-t>await</emu-t>.
-      1. Else:
-          1. Let _name_ be |Identifier| : _ident_`.name`.
-          1. Return |IdentifierReference| : _name_.
+      1. Assert: _ident_ is an `IdentifierExpression` or an `AssignmentTargetIdentifier`.
+      1. If _ident_`.name` is `"yield"`, then return |IdentifierReference| : <emu-t>yield</emu-t>.
+      1. Else, if _ident_`.name` is `"await"`, then return |IdentifierReference| : <emu-t>await</emu-t>.
+      1. Else, return |IdentifierReference| : IdentifierEcmaify(_ident_`.name`).
     </emu-alg>
   </emu-clause>
 
@@ -1919,7 +2033,7 @@ interface VariableDeclarator : Node {
     <h1>EcmaifyNewTargetExpression ( _newTarget_ )</h1>
     <emu-alg>
       1. Assert: _newTarget_ is a `NewTargetExpression`.
-      1. Let _n_ be |NewTarget| : <emu-t>new</emu-t> <emu-t>`.`</emu-t> <emu-t>target</emu-t>.
+      1. Let _n_ be |NewTarget| : <emu-t>new</emu-t> <emu-t>.</emu-t> <emu-t>target</emu-t>.
       1. Return |MetaProperty| : _n_.
     </emu-alg>
   </emu-clause>
@@ -1927,11 +2041,12 @@ interface VariableDeclarator : Node {
   <emu-clause id="sec-ecmaifyobjectexpression" aoid="EcmaifyObjectExpression">
     <h1>EcmaifyObjectExpression ( _litObj_ )</h1>
     <emu-alg>
-      1. Assert: _litObj_ is an `ObjectExpression`.
-      1. If _litObj_`.properties` has length 0, then return |ObjectLiteral| : <emu-t>`{`</emu-t> <emu-t>`}`</emu-t>.
+      1. Assert: _litObj_ is an `ObjectExpression` or an `ObjectAssignmentTarget`.
+      1. NOTE: While Binary AST distinguishes between object literals used as right-hand side expressions and used as left-hand side expressions, the ECMAScript lexical grammar deals this via a cover grammar and reparsing. While it is preferable to transform `ObjectAssignmentTarget` directly to |ObjectAssignmentPattern|, doing so would require changing the ECMAScript spec to consume that production without reparsing.
+      1. If _litObj_`.properties` has length 0, then return |ObjectLiteral| : <emu-t>{</emu-t> <emu-t>}</emu-t>.
       1. Else:
           1. Let _props_ be PropertyDefinitionListEcmaify(_litObj_`.properties`).
-          1. Return |ObjectLiteral| : <emu-t>`{`</emu-t> _props_ <emu-t>`}`</emu-t>.
+          1. Return |ObjectLiteral| : <emu-t>{</emu-t> _props_ <emu-t>}</emu-t>.
     </emu-alg>
   </emu-clause>
 
@@ -1953,13 +2068,13 @@ interface VariableDeclarator : Node {
   <emu-clause id="sec-ecmaifystaticmemberexpression" aoid="EcmaifyStaticMemberExpression">
     <h1>EcmaifyStaticMemberExpression ( _getprop_ )</h1>
     <emu-alg>
-      1. Assert: _getprop_ is a `StaticMemberExpression`.
+      1. Assert: _getprop_ is a `StaticMemberExpression` or a `StaticMemberAssignmentTarget`.
       1. If _getprop_`._object` is a `Super`, then:
-          1. Let _superProp_ be |SuperProperty| : <emu-t>super</emu-t> <emu-t>`.`</emu-t> _getprop_`.property`.
+          1. Let _superProp_ be |SuperProperty| : <emu-t>super</emu-t> <emu-t>.</emu-t> _getprop_`.property`.
           1. Return |MemberExpression| : _superProp_.
       1. Else:
           1. Let _base_ be MemberExpressionEcmaify(_getprop_`._object`).
-          1. Return |MemberExpression| : _base_ <emu-t>`.`</emu-t> _getprop_`.property`.
+          1. Return |MemberExpression| : _base_ <emu-t>.</emu-t> _getprop_`.property`.
     </emu-alg>
   </emu-clause>
 
@@ -2024,21 +2139,23 @@ interface VariableDeclarator : Node {
     </emu-alg>
   </emu-clause>
 
-  <emu-clause id="sec-ecmaifyformalparameters" aoid="EcmaifyFormalParameters">
-    <h1>EcmaifyFormalParameters ( _params_ )</h1>
+  <emu-clause id="sec-ecmaifycomputedpropertyname" aoid="EcmaifyComputedPropertyName">
+    <h1>EcmaifyComputedPropertyName ( _name_ )</h1>
     <emu-alg>
-      1. Assert: _params_ is a `FormalParameters`.
-      1. If _params_`.items` has length 0, then:
-          1. If _params_`.rest` is null, then return |FormalParameters| :.
-          1. Else:
-              1. Let _rest_ be |FunctionRestParameter| : Ecmaify(_params_`.rest`).
-              1. Return |FormalParameters| : _rest_.
-      1. Else:
-          1. Let _list_ be FormalParameterListEcmaify(_params_`.items`).
-          1. If _params_`.rest` is null, then return |FormalParameters| : _list_.
-          1. Else:
-              1. Let _rest_ be |FunctionRestParameter| : Ecmaify(_params_`.rest`).
-              1. Return |FormalParameters| : _list_ <emu-t>`,`</emu-t> _rest_.
+      1. Assert: _name_ is a `ComputedPropertyName`.
+      1. Let _expr_ be AssignmentExpressionEcmaify(_name_`.expression`).
+      1. Return |ComputedPropertyName| : <emu-t>[</emu-t> _expr_ <emu-t>]</emu-t>.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-ecmaifyliteralpropertyname" aoid="EcmaifyLiteralPropertyName">
+    <h1>EcmaifyLiteralPropertyName ( _name_ )</h1>
+    <emu-alg>
+      1. NOTE: Literal property names are canonicalized to double quoted string literals.
+      1. Assert: _name_ is a `LiteralPropertyName`.
+      1. Let _v_ be the value of _name_`.value` escaped for double quotes.
+      1. Let _l_ be |StringLiteral| : <emu-t>"</emu-t> _v_ <emu-t>"</emu-t>.
+      1. Return |LiteralPropertyName| : _l_.
     </emu-alg>
   </emu-clause>
 
@@ -2051,16 +2168,16 @@ interface VariableDeclarator : Node {
       1. If _method_`.isAsync` is |true|, then:
           1. Let _params_ be |UniqueFormalParameters| : _params0_.
           1. Let _body_ be |AsyncFunctionBody| : LazyFunctionBodyEcmaify(_method_`.body`).
-          1. Let _m_ be |AsyncMethod| : <emu-t>async</emu-t> _name_ <emu-t>`(`</emu-t> _params_ <emu-t>`)`</emu-t> <emu-t>`{`</emu-t> _body_ <emu-t>`}`</emu-t>.
+          1. Let _m_ be |AsyncMethod| : <emu-t>async</emu-t> _name_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
           1. Return |MethodDefinition| : _m_.
       1. Else, if _method_`.isGenerator` is |true|, then:
           1. Let _params_ be |UniqueFormalParameters| : _params0_.
           1. Let _body_ be |GeneratorBody| : LazyFunctionBodyEcmaify(_method_`.body`).
-          1. Let _m_ |GeneratorMethod| : <emu-t>`*`</emu-t> _name_ <emu-t>`(`</emu-t> _params_ <emu-t>`)`</emu-t> <emu-t>`{`</emu-t> _body_ <emu-t>`}`</emu-t>.
+          1. Let _m_ |GeneratorMethod| : <emu-t>`*`</emu-t> _name_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
           1. Return |MethodDefinition| : _m_.
       1. Else:
           1. Let _body_ be LazyFunctionBodyEcmaify(_method_`.body`).
-          1. Return |MethodDefinition| : _name_ <emu-t>`(`</emu-t> _params0_ <emu-t>`)`</emu-t> <emu-t>`{`</emu-t> _body_ <emu-t>`}`</emu-t>.
+          1. Return |MethodDefinition| : _name_ <emu-t>(</emu-t> _params0_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
     </emu-alg>
   </emu-clause>
 
@@ -2070,7 +2187,7 @@ interface VariableDeclarator : Node {
       1. Assert: _getter_ is a `Getter`.
       1. Let _name_ be |PropertyName| : Ecmaify(_getter_`.name`).
       1. Let _body_ be LazyFunctionBodyEcmaify(_getter_`.body`).
-      1. Return |MethodDefinition| : <emu-t>get</emu-t> _name_ <emu-t>`(`</emu-t> <emu-t>`)`</emu-t> <emu-t>`{`</emu-t> _body_ <emu-t>`}`</emu-t>.
+      1. Return |MethodDefinition| : <emu-t>get</emu-t> _name_ <emu-t>(</emu-t> <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
     </emu-alg>
   </emu-clause>
 
@@ -2081,7 +2198,7 @@ interface VariableDeclarator : Node {
       1. Let _name_ be |PropertyName| : Ecmaify(_setter_`.name`).
       1. Let _param_ be |PropertySetParameterList| : Ecmaify(_setter_`.param`).
       1. Let _body_ be LazyFunctionBodyEcmaify(_setter_`.body`).
-      1. Return |MethodDefinition| : <emu-t>set</emu-t> _name_ <emu-t>`(`</emu-t> _param_ <emu-t>`)`</emu-t> <emu-t>`{`</emu-t> _body_ <emu-t>`}`</emu-t>.
+      1. Return |MethodDefinition| : <emu-t>set</emu-t> _name_ <emu-t>(</emu-t> _param_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
     </emu-alg>
   </emu-clause>
 
@@ -2091,7 +2208,7 @@ interface VariableDeclarator : Node {
       1. Assert: _prop_ is a `DataProperty`.
       1. Let _name_ be |PropertyName| : Ecmaify(_prop_`.name`).
       1. Let _expr_ be AssignmentExpressionEcmaify(_prop_`.expression`).
-      1. Return |PropertyDefinition| : _name_ <emu-t>`:`</emu-t> _expr_.
+      1. Return |PropertyDefinition| : _name_ <emu-t>:</emu-t> _expr_.
     </emu-alg>
   </emu-clause>
 
@@ -2104,40 +2221,82 @@ interface VariableDeclarator : Node {
     </emu-alg>
   </emu-clause>
 
-  <emu-clause id="sec-ecmaifycomputedpropertyname" aoid="EcmaifyComputedPropertyName">
-    <h1>EcmaifyComputedPropertyName ( _name_ )</h1>
+  <emu-clause id="sec-ecmaifybindingidentifier" aoid="EcmaifyBindingIdentifier">
+    <h1>EcmaifyBindingIdentifier ( _b_ )</h1>
     <emu-alg>
-      1. Assert: _name_ is a `ComputedPropertyName`.
-      1. Let _expr_ be AssignmentExpressionEcmaify(_name_`.expression`).
-      1. Return |ComputedPropertyName| : <emu-t>`[`</emu-t> _expr_ <emu-t>`]`</emu-t>.
+      1. Assert: _b_ is a `BindingIdentifier`.
+      1. If _b_`.name` is `"yield"`, then return |BindingIdentifier| : <emu-t>yield</emu-t>.
+      1. Else, if _b_`.name` is `"await"`, then return |BindingIdentifier| : <emu-t>await</emu-t>.
+      1. Else, return |BindingIdentifier| : IdentifierEcmaify(_b_`.name`).
     </emu-alg>
   </emu-clause>
 
-  <emu-clause id="sec-ecmaifyliteralpropertyname" aoid="EcmaifyLiteralPropertyName">
-    <h1>EcmaifyLiteralPropertyName ( _name_ )</h1>
+  <emu-clause id="sec-ecmaifyobjectbinding" aoid="EcmaifyObjectBinding">
+    <h1>EcmaifyObjectBinding ( _obj_ )</h1>
     <emu-alg>
-      1. NOTE: Literal property names are canonicalized to double quoted string literals.
-      1. Assert: _name_ is a `LiteralPropertyName`.
-      1. Let _v_ be the value of _name_`.value` escaped for double quotes.
-      1. Let _l_ be |StringLiteral| : <emu-t>&#34;</emu-t> _v_ <emu-t>&#34;</emu-t>.
-      1. Return |LiteralPropertyName| : _l_.
+      1. Assert: _obj_ is an `ObjectBinding`.
+      1. If _obj_`.properties` has length 0, then return |ObjectBindingPattern| : <emu-t>{</emu-t> <emu-t>}</emu-t>.
+      1. Else, return |ObjectBindingPattern| : <emu-t>{</emu-t> BindingPropertyListEcmaify(_obj_`.properties`) <emu-t>}</emu-t>.
     </emu-alg>
   </emu-clause>
 
-  <emu-clause id="sec-ecmaifyparameter" aoid="EcmaifyParameter">
-    <h1>EcmaifyParameter ( _param_ )</h1>
+  <emu-clause id="sec-ecmaifybindingpropertyidentifier" aoid="EcmaifyBindingPropertyIdentifier">
+    <h1>EcmaifyBindingPropertyIdentifier ( _nameBinding_ )</h1>
     <emu-alg>
-      1. Assert: _param_ is a `Parameter`.
-      1. Return |FormalParameter| : Ecmaify(_param_).
+      1. Assert: _nameBinding_ is a `BindingPropertyIdentifier`.
+      1. Let _binding_ be BindingIdentifierEcmaify(_nameBinding_`.binding`).
+      1. Let _init_ be an empty Parse Node.
+      1. If _nameBinding_`.init` is not *null*, then let _init_ be InitializerEcmaify(_nameBinding_`.init`).
+      1. Let _singleNameBinding_ be |SingleNameBinding| : _binding_ _init_.
+      1. Return |BindingProperty| : _singleNameBinding_.
     </emu-alg>
   </emu-clause>
 
-  <emu-clause id="sec-ecmaifyvariabledeclarationkind" aoid="EcmaifyVariableDeclarationKind">
-    <h1>EcmaifyVariableDeclarationKind ( _k_ )</h1>
+  <emu-clause id="sec-ecmaifybindingproperty" aoid="EcmaifyBindingPropertyProperty">
+    <h1>EcmaifyBindingPropertyProperty ( _propBinding_ )</h1>
     <emu-alg>
-      1. Assert: _k_ is `"let"` or `"const"`.
-      1. If _k_ is `"let"`, then return |LetOrConst| : <emu-t>let</emu-t>.
-      1. Else, return |LetOrConst| : <emu-t>const</emu-t>.
+      1. Assert: _propBinding_ is a `BindingPropertyProperty`.
+      1. Let _propName_ be |PropertyName| : Ecmaify(_propBinding_`.name`).
+      1. Let _binding_ be BindingElementEcmaify(_propBinding_`.binding).
+      1. Return |BindingProperty| : _propName_ <emu-t>:</emu-t> _binding_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-ecmaifyarraybinding" aoid="EcmaifyArrayBinding">
+    <h1>EcmaifyArrayBinding ( _arr_ )</h1>
+    <emu-alg>
+      1. Assert: _arr_ is an `ArrayBinding`.
+      1. If _arr_`.elements` has length 0, then:
+          1. If _arr_`.rest` is *null*, then return |ArrayBindingPattern| : <emu-t>[</emu-t> <emu-t>]</emu-t>.
+          1. Else:
+              1. Let _restElem_ be BindingRestElementEcmaify(_arr_`.rest`).
+              1. Return |ArrayBindingPattern| : <emu-t>[</emu-t> _restElem_ <emu-t>]</emu-t>.
+      1. Let _elemList_ and _elisions_ be the results of BindingElementListEcmaify(_arr_`.elements`).
+      1. If _elemList_ is empty, then:
+          1. If _arr_`.rest` is *null*, then throw a *SyntaxError* exception.
+          1. Else:
+              1. Let _restElem_ be BindingRestElementEcmaify(_arr_`.rest`).
+              1. Return |ArrayBindingPattern| : <emu-t>[</emu-t> _elisions_ _restElem_ <emu-t>]</emu-t>.
+      1. Else:
+          1. If _arr_`.rest` is *null*, then:
+              1. If _elisions_ is not empty, then throw a *SyntaxError* exception.
+              1. Return |ArrayBindingPattern| : <emu-t>[</emu-t> _elemList_ <emu-t>]</emu-t>.
+          1. Else:
+              1. Let _restElem_ be BindingRestElementEcmaify(_arr_`.rest`).
+              1. Return |ArrayBindingPattern| : <emu-t>[</emu-t> _elemList_ _elisions_ _restElem_ <emu-t>]</emu-t>.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-ecmaifybindingwithdefault" aoid="EcmaifyBindingWithInitializer">
+    <h1>EcmaifyBindingWithInitializer ( _bindingWithInit_ )</h1>
+    <emu-alg>
+      1. Assert: _bindingWithInit_ is a `BindingWithInitializer`.
+      1. Let _binding_ be Ecmaify(_binding_`.binding`).
+      1. Let _init_ be InitializerEcmaify(_binding_`.init`).
+      1. If _bindingWithInit_`.binding` is a `BindingIdentifier`, then:
+          1. Let _singleNameBinding_ be |SingleNameBinding| : _binding_ _init_.
+          1. Return |BindingElement| : _singleNameBinding_.
+      1. Else, return |BindingElement| : _binding_ _init_.
     </emu-alg>
   </emu-clause>
 
@@ -2145,10 +2304,35 @@ interface VariableDeclarator : Node {
     <h1>EcmaifyForInOfBinding ( _b_ )</h1>
     <emu-alg>
       1. Assert: _b_ is a `ForInOfBinding`.
+      1. Assert: _b_`.kind` is not `"var"`.
       1. Let _binding_ be |ForBinding| : Ecmaify(_b_`.binding`).
-      1. If _b_.kind is `"var"`, then:
-          1. Return the partial Parse Node <emu-t>var</emu-t> _binding_.
       1. Else, return |ForDeclaration| : Ecmaify(_b_`.kind`) _binding_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-ecmaifyparameter" aoid="EcmaifyParameter">
+    <h1>EcmaifyParameter ( _param_ )</h1>
+    <emu-alg>
+      1. Assert: _param_ is a `Parameter`.
+      1. Return |FormalParameter| : BindingElementEcmaify(_param_).
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-ecmaifyformalparameters" aoid="EcmaifyFormalParameters">
+    <h1>EcmaifyFormalParameters ( _params_ )</h1>
+    <emu-alg>
+      1. Assert: _params_ is a `FormalParameters`.
+      1. If _params_`.items` has length 0, then:
+          1. If _params_`.rest` is null, then return |FormalParameters| :.
+          1. Else:
+              1. Let _rest_ be |FunctionRestParameter| : BindingRestElementEcmaify(_params_`.rest`).
+              1. Return |FormalParameters| : _rest_.
+      1. Else:
+          1. Let _list_ be FormalParameterListEcmaify(_params_`.items`).
+          1. If _params_`.rest` is null, then return |FormalParameters| : _list_.
+          1. Else:
+              1. Let _rest_ be |FunctionRestParameter| : BindingRestElementEcmaify(_params_`.rest`).
+              1. Return |FormalParameters| : _list_ <emu-t>,</emu-t> _rest_.
     </emu-alg>
   </emu-clause>
 
@@ -2158,7 +2342,16 @@ interface VariableDeclarator : Node {
       1. Assert: _catchClause_ is a `CatchClause`.
       1. Let _binding_ be Ecmaify(_catchClause_`.binding`).
       1. Let _body_ be Ecmaify(_catchClause_`.body`).
-      1. Return |Catch| : <emu-t>catch</emu-t> <emu-t>`(`</emu-t> _binding_ <emu-t>`)`</emu-t> _body_.
+      1. Return |Catch| : <emu-t>catch</emu-t> <emu-t>(</emu-t> _binding_ <emu-t>)</emu-t> _body_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-ecmaifyvariabledeclarationkind" aoid="EcmaifyVariableDeclarationKind">
+    <h1>EcmaifyVariableDeclarationKind ( _k_ )</h1>
+    <emu-alg>
+      1. Assert: _k_ is `"let"` or `"const"`.
+      1. If _k_ is `"let"`, then return |LetOrConst| : <emu-t>let</emu-t>.
+      1. Else, return |LetOrConst| : <emu-t>const</emu-t>.
     </emu-alg>
   </emu-clause>
 
