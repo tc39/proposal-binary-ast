@@ -344,6 +344,7 @@ interface ClassElement : Node {
 // modules
 
 interface Module : Node {
+  attribute AssertedScope? scope;
   attribute FrozenArray&lt;Directive&gt; directives;
   attribute FrozenArray&lt;(ImportDeclaration or ExportDeclaration or Statement)&gt; items;
 };
@@ -835,6 +836,7 @@ interface FunctionDeclaration : Node {
 };
 
 interface Script : Node {
+  attribute AssertedScope? scope;
   attribute FrozenArray&lt;Directive&gt; directives;
   attribute FrozenArray&lt;Statement&gt; statements;
 };
@@ -1421,7 +1423,7 @@ interface VariableDeclarator : Node {
       1. If _rest_ is a `BindingPattern`, then let _restElem0_ be |BindingPattern| : _restBinding_.
       1. Else let _restElem0_ be _restBinding_.
       1. Return |BindingRestElement| : <emu-t>...</emu-t> _restElem0_.
-    </emu-alg>
+    </emu-alg>:
   </emu-clause>
 
   <emu-clause id="sec-ecmaifyscript" aoid="EcmaifyScript">
@@ -1429,14 +1431,18 @@ interface VariableDeclarator : Node {
     <emu-alg>
       1. NOTE: This is called when a binary AST corresponding to a script is evaluated via BinaryASTScriptEvaluationJob.
       1. Assert: _s_ is a `Script`.
+      1. Let _scope_ be _s_`.scope`.
       1. If HasMalformedDirectives(_s_`.directives`, _s_`.statements`) is *false*, throw a *SyntaxError* exception.
       1. Let _dirsStmts_ be _s_`.directives` prepended to _s_`.statements`.
+      1. Let _script_ be an empty Parse Node.
       1. If _s_`.directives` has length 0 and _s_`.statements` has length 0, then
-          1. return |Script| :.
+          1. Set _script_ to |Script| :.
       1. Else,
           1. Let _dirStmts_ be _s_`.directives` concatenated with _s_`.statements`.
           1. Let _stmts_ be StatementListEcmaify(_dirStmts_).
-          1. Return |Script| : _stmts_.
+          1. Set _script_ to |Script| : _stmts_.
+      1. Perform ? CheckAssertedScopeDeclaredNames(_scope_, *null*).
+      1. Return _script_.
     </emu-alg>
   </emu-clause>
 
@@ -2663,8 +2669,8 @@ interface VariableDeclarator : Node {
         1. Set _newContext_'s Function to *null*.
         1. Set _newContext_'s Realm to _nextPending_.[[Realm]].
         1. Set _newContext_'s ScriptOrModule to _nextPending_.[[ScriptOrModule]].
-        1. <ins>Set _newContext_'s AssertedScopeStack to an empty List.</ins>
-        1. <ins>Set _newContext_'s OustandingAssertedScopes to an empty List.</ins>
+        1. <ins>Set _newContext_'s AssertedScopeStack to a new empty List.</ins>
+        1. <ins>Set _newContext_'s OustandingAssertedScopes to a new empty List.</ins>
         1. Push _newContext_ onto the execution context stack; _newContext_ is now the running execution context.
         1. Perform any implementation or host environment defined job initialization using _nextPending_.
         1. Let _result_ be the result of performing the abstract operation named by _nextPending_.[[Job]] using the elements of _nextPending_.[[Arguments]] as its arguments.
