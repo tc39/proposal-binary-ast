@@ -9,12 +9,13 @@ status: proposal
 contributors: Shu-yu Guo, David Teller, Ecma International
 </pre>
 <emu-intro id="binast-intro">
-  <h1>Binary AST Tree Grammar</h1>
-  <p>The binary AST Tree Grammar is isomorphic to ECMA-262 Syntactic Grammar. That is, an instance of a production of the binary AST grammar, or a <dfn>binary AST Node</dfn>, corresponds to some Parse Node in the ECMA-262 syntactic grammar. This document specifies the following things.</p>
+  <h1>Binary AST</h1>
+  <p>The binary AST is isomorphic to ECMA-262 Syntactic Grammar. That is, an instance of a production of the binary AST grammar, or a <dfn>binary AST Node</dfn>, corresponds to some Parse Node in the ECMA-262 syntactic grammar. This document specifies the following things.</p>
   <ol>
     <li>The tree grammar itself described in IDL and its well-formedness.</li>
-    <li>The abstract operation Ecmaify(_binaryAST_) from binary AST Nodes to Parse Nodes by case analysis.</li>
-    <li>The abstract operation ParseNodesAreSimilar(_node1_, _node2_) from pairs of Parse Nodes to Boolean.</li>
+    <li>The transformation abstract operation Ecmaify(_binaryAST_) from binary AST Nodes to Parse Nodes by case analysis.</li>
+    <li>TODO: The similarity Static Semantics ParseNodesAreSimilar.</li>
+    <li>The evaluation of binary AST input.</li>
   </ol>
   <p>A compliant binary AST Encoder, for a source text that matches either the |Script| or |Module| goal symbol to produce a Parse Node _N_, must produce a binary AST Node _B_ such that ParseNodesAreSimilar(Ecmaify(_B_), _N_) is *true*.</p>
   <p>The inverse of Ecmaify, Unecmaify, is not specified here. The inverse transform is the encoding of Parse Nodes. For _B_ and _N_ as above, for all _M_ such that ParseNodesAreSimilar(_M_, _N_) is *true*, Unecmaify(_M_) is _B_.</p>
