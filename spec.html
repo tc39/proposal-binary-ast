@@ -2568,7 +2568,7 @@ interface VariableDeclarator : Node {
             A List
           </td>
           <td>
-            The names that are asserted to be captured but have not yet been observed to be captured.
+            The names that are asserted to be statically captured (i.e. not via direct eval or the *Function* constructor) but have not yet been observed to be captured.
           </td>
         </tr>
         <tr>
@@ -2597,6 +2597,16 @@ interface VariableDeclarator : Node {
       </table>
     </emu-table>
 
+    <emu-clause id="sec-addglobaloutstandingassertedscope" aoid="AddGlobalOutstandingAssertedScope">
+      <h1>AddGlobalOutstandingAssertedScope ( _outstandingAssert_ )</h1>
+      <emu-alg>
+        1. Assert: _outstandingAssert_.[[HasDirectEval]] is not `"satisfied"` or _outstandingAssert_.[[CapturedNames]] is a non-empty List.
+        1. If _outstandingAssert_.[[InnerFunctions]] is an empty List, throw a *SyntaxError* exception.
+        1. If _outstandingAssert_ is not in GlobalOutstandingAssertedScopes, then
+            1. Add _outstandingAssert_ as the last element of GlobalOutstandingAssertedScopes.
+      </emu-alg>
+    </emu-clause>
+
     <emu-clause id="sec-checkassertedscope" aoid="CheckAssertedScope">
       <h1>CheckAssertedScope ( _scope_ , _parseTree_ )</h1>
       <emu-alg>
@@ -2621,19 +2631,16 @@ interface VariableDeclarator : Node {
         1. NOTE: Presence of direct eval and veracity of captured names cannot be fully checked until inner functions are evaluated.
         1. Let _outstandingCapturedNames_ be a new empty List.
         1. Let _innerFunctions_ be a new empty List.
+        1. For each |FunctionBody| _fb_ contained in _parseTree_, do
+            1. Add _fb_ as the last element of _innerFunctions_.
         1. Let _outstandingAssert_ be a new OutstandingAssertedScope Record {[[CapturedName]]: _outstandingCapturedNames_, [[HasDirectEval]]: `"satisfied"`, [[InnerFunctions]]: _innerFunctions_}.
         1. Let _containsDirectEval_ be *true* if _parseTree_ contains a direct eval, *false* otherwise.
         1. If it is not the case both _containsDirectEval_ and _scope_`.hasDirectEval` are *true*, then
             1. Set _outstandingAssert_.[[HasDirectEval]] to _scope_`.hasDirectEval`.
-            1. If _outstandingAssert_ is not in GlobalOutstandingAssertedScopes, then
-                1. Add _outstandingAssert_ as the last element of GlobalOutstandingAssertedScopes.
+            1. Perform ? AddGlobalOutstandingAssertedScope(_outstandingAssert_).
         1. If _scope_`.capturedNames` has length great than 0, then
-            1. NOTE: _scope_`.capturedNames` only has statically knowable captured names. If a name's capture is statically unknowable, such as via direct eval, the `hasDirectEval` attribute should be used.
-            1. For each |FunctionBody| _fb_ contained in _parseTree_, do
-                1. Add _fb_ as the last element of _innerFunctions_.
-            1. If _innerFunctions_ is an empty List, throw a *SyntaxError* exception.
-            1. If _outstandingAssert_ is not in GlobalOutstandingAssertedScopes, then
-                1. Add _outstandingAssert_ as the last element of GlobalOutstandingAssertedScopes.
+            1. Perform ? AddGlobalOutstandingAssertedScope(_outstandingAssert_).
+
       </emu-alg>
     </emu-clause>
 
@@ -2645,7 +2652,7 @@ interface VariableDeclarator : Node {
         1. For each |FunctionBody| _fb_ contained in _funcBody_, do
             1. Add _fb_ as the last element of _innerFunctions_.
         1. Let _freeNames_ be the FreeNames of _funcBody_.
-        1. For each OutstandingAssertedScope Record _outstandingAssert_ of GlobalOutstandingAssertedScopes, do
+        1. For each OutstandingAssertedScope Record _outstandingAssert_ in GlobalOutstandingAssertedScopes, do
             1. If _outstandingAssert_.[[InnerFunctions]] contains _funcBody_, then
                 1. Remove _funcBody_ from _outstandingAssert_.[[InnerFunctions]].
                 1. Let _allSatisfied_ be *true*.
