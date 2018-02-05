@@ -2795,8 +2795,8 @@ interface VariableDeclarator : Node {
       1. Assert: <del>_sourceText_</del><ins>_sourceTextOrAST_</ins> is an ECMAScript source text (see clause <emu-xref href="#sec-ecmascript-language-source-code"></emu-xref>)<ins> or a `Script` (see <emu-xref href="#binast-tree-grammar" title></emu-xref>)</ins>.
       1. Let _realm_ be the current Realm Record.
       1. <del>L</del><ins>If _sourceTextOrAST_ is an ECMAScript source text, then l</ins>et _s_ be ParseScript(<del>_sourceText_</del><ins>_sourceTextOrAST_</ins>, _realm_, _hostDefined_).
-      1. <ins>Else let _s_ be TransformASTScript(_sourceTextOrAST_, _realm_, _hostDefined_).</ins>
-      1. If _s_ is a List of errors, then
+      1. <ins>Else let _s_ be ? TransformASTScript(_sourceTextOrAST_, _realm_, _hostDefined_).</ins>
+      1. If _s_ is a List of errors or _s_, then
           1. Perform HostReportErrors(_s_).
           1. Return NormalCompletion(*undefined*).
       1. Return ? ScriptEvaluation(_s_).
@@ -2808,7 +2808,6 @@ interface VariableDeclarator : Node {
     <p>TransformASTScript is a new abstract operation.</p>
     <emu-alg>
       1. Let _body_ be ? EcmaifyScript(_ast_).
-      1. If _body_ is a List of errors, return _body_.
       1. Return Script Record {[[Realm]]: _realm_, [[Environment]]: *undefined*, [[ECMAScriptCode]]: _body_, [[HostDefined]]: _hostDefined_}.
     </emu-alg>
   </emu-clause>
