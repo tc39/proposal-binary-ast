@@ -2720,6 +2720,12 @@ interface VariableDeclarator : Node {
               1. Remove _dn_ from _freeNames_.
           1. Return _freeNames_.
         </emu-alg>
+        <emu-grammar>StatementList : StatementList StatementListItem</emu-grammar>
+        <emu-alg>
+          1. Let _freeNames_ be FreeNames of |StatementList|.
+          1. Append to _freeNames_ the elements of the FreeNames of |StatementListItem|.
+          1. Return _freeNames_.
+        </emu-alg>
       </emu-clause>
 
       <emu-clause id="sec-functionbody-static-semantics-freenames">
