@@ -905,9 +905,9 @@ interface VariableDeclarator : Node {
       1. For each _node_ in _nodes_, do
           1. If the _node_ is an `ExpressionStatement` and _node_.expression is a `StringLiteralExpression`:
               1. For each _dir_ in _directives_, do
-                  1. If _node_.`expression.value` is the same value as _dir_`.rawValue`, then return *false*.
+                  1. If _node_.`expression.value` is the same value as _dir_`.rawValue`, then return *true*.
               1. NOTE: This restriction disallows encoding directives as string literals.
-      1. Return *true*.
+      1. Return *false*.
     </emu-alg>
   </emu-clause>
 
@@ -1432,7 +1432,7 @@ interface VariableDeclarator : Node {
       1. If _rest_ is a `BindingPattern`, then let _restElem0_ be |BindingPattern| : _restBinding_.
       1. Else let _restElem0_ be _restBinding_.
       1. Return |BindingRestElement| : <emu-t>...</emu-t> _restElem0_.
-    </emu-alg>:
+    </emu-alg>
   </emu-clause>
 
   <emu-clause id="sec-ecmaifyscript" aoid="EcmaifyScript">
@@ -1440,7 +1440,7 @@ interface VariableDeclarator : Node {
     <emu-alg>
       1. NOTE: This is called when a binary AST corresponding to a script is evaluated via BinaryASTScriptEvaluationJob.
       1. Assert: _s_ is a `Script`.
-      1. If HasMalformedDirectives(_s_`.directives`, _s_`.statements`) is *false*, throw a *SyntaxError* exception.
+      1. If HasMalformedDirectives(_s_`.directives`, _s_`.statements`) is *true*, throw a *SyntaxError* exception.
       1. Let _dirsStmts_ be _s_`.directives` prepended to _s_`.statements`.
       1. Let _script_ be an empty Parse Node.
       1. If _s_`.directives` has length 0 and _s_`.statements` has length 0, then
@@ -1470,7 +1470,7 @@ interface VariableDeclarator : Node {
       1. Assert: _f_ is a `FunctionBody`.
       1. Let _stmts_ be an empty Parse Node.
       1. If _f_ is a `FunctionBody`, then
-          1. If HasMalformedDirectives(_f_`.directives`, _f_`.statements`) is *false*, throw a *SyntaxError* exception.
+          1. If HasMalformedDirectives(_f_`.directives`, _f_`.statements`) is *true*, throw a *SyntaxError* exception.
           1. Let _dirStmts_ be _f_`.directives` concatenated with _f_`.statements`.
           1. Set _stmts_ to ? StatementListEcmaify(_dirStmts_).
       1. Else,
@@ -1845,7 +1845,7 @@ interface VariableDeclarator : Node {
     <h1>EcmaifyArrayExpression ( _litArray_ )</h1>
     <emu-alg>
       1. Assert: _litArray_ is an `ArrayExpression` or an `ArrayAssignmentTarget`.
-      1. NOTE: While binary AST distinguishes between array literals used as right-hand side expressions and used as left-hand side expressions, the ECMAScript lexical grammar deals this via a cover grammar and reparsing. While it is preferable to transform `ArrayAssignmentTarget` directly to |ArrayAssignmentPattern|, doing so would require changing the ECMAScript spec to consume that production without reparsing.
+      1. NOTE: While binary AST distinguishes between array literals used as right-hand side expressions and used as left-hand side expressions, the ECMAScript lexical grammar deals with this via a cover grammar and reparsing. While it is preferable to transform `ArrayAssignmentTarget` directly to |ArrayAssignmentPattern|, doing so would require changing the ECMAScript spec to consume that production without reparsing.
       1. If _litArray_`.elements` has length 0, then
           1. Return |ArrayLiteral| : <emu-t>[</emu-t> <emu-t>]</emu-t>.
       1. Let and _elementList_ and _elisions_ be the results of ? ElementListEcmaify(_litArray_`.elements`).
@@ -2081,7 +2081,7 @@ interface VariableDeclarator : Node {
     <h1>EcmaifyObjectExpression ( _litObj_ )</h1>
     <emu-alg>
       1. Assert: _litObj_ is an `ObjectExpression` or an `ObjectAssignmentTarget`.
-      1. NOTE: While binary AST distinguishes between object literals used as right-hand side expressions and used as left-hand side expressions, the ECMAScript lexical grammar deals this via a cover grammar and reparsing. While it is preferable to transform `ObjectAssignmentTarget` directly to |ObjectAssignmentPattern|, doing so would require changing the ECMAScript spec to consume that production without reparsing.
+      1. NOTE: While binary AST distinguishes between object literals used as right-hand side expressions and used as left-hand side expressions, the ECMAScript lexical grammar deals with this via a cover grammar and reparsing. While it is preferable to transform `ObjectAssignmentTarget` directly to |ObjectAssignmentPattern|, doing so would require changing the ECMAScript spec to consume that production without reparsing.
       1. If _litObj_`.properties` has length 0, then return |ObjectLiteral| : <emu-t>{</emu-t> <emu-t>}</emu-t>.
       1. Else,
           1. Let _props_ be ? PropertyDefinitionListEcmaify(_litObj_`.properties`).
