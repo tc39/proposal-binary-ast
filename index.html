@@ -809,6 +809,7 @@
 
 <span class="hljs-comment">// `Catch`</span>
 <span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">CatchClause</span> : <span class="hljs-title">Node</span> {</span>
+  <span class="hljs-keyword">attribute</span> AssertedBlockScope? scope;
   <span class="hljs-keyword">attribute</span> Binding binding;
   <span class="hljs-keyword">attribute</span> Block body;
 };
