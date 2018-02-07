@@ -111,9 +111,10 @@ interface AssertedBlockScope {
   // checked lazily as inner functions are invoked
   attribute FrozenArray&lt;IdentifierName&gt; capturedNames;
   attribute boolean hasDirectEval;
+  attribute boolean hasDirectSuper;
 };
 
-interface AssertedTopLevelScope {
+interface AssertedVarScope {
   // checked eagerly during transformation
   attribute FrozenArray&lt;IdentifierName&gt; lexicallyDeclaredNames;
   attribute FrozenArray&lt;IdentifierName&gt; varDeclaredNames;
@@ -121,6 +122,17 @@ interface AssertedTopLevelScope {
   // checked lazily as inner functions are invoked
   attribute FrozenArray&lt;IdentifierName&gt; capturedNames;
   attribute boolean hasDirectEval;
+  attribute boolean hasDirectSuper;
+};
+
+interface AssertedParameterScope {
+  // checked eagerly during transformation
+  attribute FrozenArray&lt;IdentifierName&gt; parameterNames;
+
+  // checked lazily as inner functions are invoked
+  attribute FrozenArray&lt;IdentifierName&gt; capturedNames;
+  attribute boolean hasDirectEval;
+  attribute boolean hasDirectSuper;
 };
 
 // nodes
@@ -353,7 +365,7 @@ interface ClassElement : Node {
 // modules
 
 interface Module : Node {
-  attribute AssertedTopLevelScope? scope;
+  attribute AssertedVarScope? scope;
   attribute FrozenArray&lt;Directive&gt; directives;
   attribute FrozenArray&lt;(ImportDeclaration or ExportDeclaration or Statement)&gt; items;
 };
@@ -593,7 +605,8 @@ interface ConditionalExpression : Node {
 interface FunctionExpression : Node {
   attribute boolean isAsync;
   attribute boolean isGenerator;
-  attribute AssertedTopLevelScope? scope;
+  attribute AssertedParameterScope? parameterScope;
+  attribute AssertedVarScope? bodyScope;
   attribute BindingIdentifier? name;
   attribute FormalParameters params;
   attribute FunctionBody body;
@@ -838,14 +851,15 @@ interface FunctionBody : Node {
 interface FunctionDeclaration : Node {
   attribute boolean isAsync;
   attribute boolean isGenerator;
-  attribute AssertedTopLevelScope? scope;
+  attribute AssertedParameterScope? parameterScope;
+  attribute AssertedVarScope? bodyScope;
   attribute BindingIdentifier name;
   attribute FormalParameters params;
   attribute FunctionBody body;
 };
 
 interface Script : Node {
-  attribute AssertedTopLevelScope? scope;
+  attribute AssertedVarScope? scope;
   attribute FrozenArray&lt;Directive&gt; directives;
   attribute FrozenArray&lt;Statement&gt; statements;
 };
@@ -1333,16 +1347,58 @@ interface VariableDeclarator : Node {
     </emu-alg>
   </emu-clause>
 
-  <emu-clause id="sec-lazyfunctionbodyecmaify" aoid="LazyFunctionBodyEcmaify">
-    <h1>LazyFunctionBodyEcmaify ( _f_ )</h1>
+  <emu-clause id="sec-lazyformalparametersecmaify" aoid="LazyFormalParametersEcmaify">
+    <h1>LazyFormalParametersEcmaify ( _params_ )</h1>
     <emu-alg>
-      1. NOTE: When an |EmptyStatement| tagged as being produced by a binary AST FunctionBody is evaluated at runtime, Ecmaify is run on the function at that time.
+      1. NOTE: When a |FormalParameters| : [empty] tagged as being produced by a binary AST `FormalParameters` is evaluated at runtime, Ecmaify is run on the parameters at that time to delazify.
+      1. TODO: The `length` property Function instances need delazifying.
+      1. Assert: _params_ is a `FormalParameters`.
+      1. Let _emptyParams_ be |FormalParameters| : [empty].
+      1. Tag _emptyParams_ as being produced by _params_.
+      1. Return _emptyParams_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-lazycoverarrowparameterlistecmaify" aoid="LazyCoverArrowParameterListEcmaify">
+    <h1>LazyCoverArrowParameterListEcmaify ( _params_ )</h1>
+    <emu-alg>
+      1. NOTE: When a |CoverParenthesizedExpressionAndArrowParameterList| : <emu-t>(</emu-t> <emu-t>)</emu-t> tagged as being produced by a binary AST `FormalParameters` is evaluated at runtime, Ecmaify is run on the parameters at that time to delazify.
+      1. TODO: The `length` property Function instances need delazifying.
+      1. Assert: _params_ is a `FormalParameters`.
+      1. Let _emptyArrowParams0_ be a |CoverParenthesizedExpressionAndArrowParameterList| : <emu-t>(</emu-t> <emu-t>)</emu-t>.
+      1. Let _emptyArrowParams_ be |ArrowParameters| : _emptyArrowParams0_.
+      1. Tag _emptyArrowParams_ as being produced by _params_.
+      1. Return _emptyArrowParams_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-lazypropertysetparameterlistecmaify" aoid="LazyPropertySetParameterListEcmaify">
+    <h1>LazyPropertySetParameterListEcmaify ( _param_ )</h1>
+    <emu-alg>
+      1. NOTE: When a |PropertySetParameterList| tagged as being produced by a binary AST `Parameter` is evaluated at runtime, Ecmaify is run on the parameter at that time to delazify.
+      1. TODO: The `length` property Function instances need delazifying.
+      1. TODO: |FormalParameter| needs an empty variant for tagging.
+      1. Assert: _param_ is a `Parameter`.
+      1. Let _placeholder_ be |Identifier| : <emu-t>_</emu-t>.
+      1. Let _emptyPropSetParam0_ be |FormalParameter| : _placeholder_.
+      1. Let _emptyPropSetParam_ be |PropertySetParameterList| : _emptyPropSetParam0_.
+      1. Tag _emptyPropSetParam_ as being produced by _param_.
+      1. Return _emptyPropSetParam_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-lazyfunctionbodyecmaify" aoid="LazyFunctionBodyEcmaify">
+    <h1>LazyFunctionBodyEcmaify ( _f_ , _parent_ )</h1>
+    <emu-alg>
+      1. NOTE: When a |FunctionBody| tagged as being produced by a binary AST `FunctionBody` is evaluated at runtime, Ecmaify is run on the function at that time to delazify.
+      1. NOTE: The _parent_ is used to determine the production to use when validating early error rules during delazifying.
       1. Assert: _f_ is a `FunctionBody` or an `Expression`.
       1. Let _emptyStmt_ be |StatementListItem| : |EmptyStatement|.
-      1. Tag _emptyStmt_ as being produced by _f_.
       1. Let _stmts_ be |StatementList| : _emptyStmt_.
       1. Let _funcStmts_ be |FunctionStatementList| : _stmts_
-      1. Return |FunctionBody| : _funcStmts_.
+      1. Let _body_ be |FunctionBody| : _funcStmts_.
+      1. Tag _body_ as being produced by &laquo; _f_, _parent_ &raquo;.
+      1. Return _body_.
     </emu-alg>
   </emu-clause>
 
@@ -1463,10 +1519,48 @@ interface VariableDeclarator : Node {
     </emu-alg>
   </emu-clause>
 
+  <emu-clause id="sec-ecmaifyformalparameters" aoid="EcmaifyFormalParameters">
+    <h1>EcmaifyFormalParameters ( _params_ )</h1>
+    <emu-alg>
+      1. NOTE: This is called when a |FormalParameters| tagged as being produced by a binary AST `FormalParameters` is evaluated.
+      1. Assert: _params_ is a `FormalParameters`.
+      1. If _params_`.items` has length 0, then
+          1. If _params_`.rest` is null, then return |FormalParameters| :.
+          1. Else,
+              1. Let _rest_ be |FunctionRestParameter| : ? BindingRestElementEcmaify(_params_`.rest`).
+              1. Return |FormalParameters| : _rest_.
+      1. Else,
+          1. Let _list_ be ? FormalParameterListEcmaify(_params_`.items`).
+          1. If _params_`.rest` is null, then return |FormalParameters| : _list_.
+          1. Else,
+              1. Let _rest_ be |FunctionRestParameter| : ? BindingRestElementEcmaify(_params_`.rest`).
+              1. Return |FormalParameters| : _list_ <emu-t>,</emu-t> _rest_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-ecmaifycoverarrowparameterlist" aoid="EcmaifyCoverArrowParameterList">
+    <h1>EcmaifyCoverArrowParameterList ( _params_ )</h1>
+    <emu-alg>
+      1. NOTE: This is called when an |ArrowParameters| tagged as being produced by a binary AST `FormalParameters` is evaluated.
+      1. Assert: _params_ is a `FormalParameters`.
+      1. Let _params0_ be |UniqueFormalParameters| : ? EcmaifyFormalParameters(_params_).
+      1. Return _params_ |ArrowFormalParameters| : <emu-t>(</emu-t> _params0_ <emu-t>)</emu-t>.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-ecmaifypropertysetparameterlist" aoid="EcmaifyPropertySetParameterList">
+    <h1>EcmaifyPropertySetParameterList ( _param_ )</h1>
+    <emu-alg>
+      1. Assert: _param_ is a `Parameter`.
+      1. Let _param0_ ? Ecmaify(_param_).
+      1. Return |PropertySetParameterList| : _param0_.
+    </emu-alg>
+  </emu-clause>
+
   <emu-clause id="sec-ecmaifyfunctionbody" aoid="EcmaifyFunctionBody">
     <h1>EcmaifyFunctionBody ( _f_ )</h1>
     <emu-alg>
-      1. NOTE: This is called when an |EmptyStatement| tagged as being produced by a binary AST FunctionBody is evaluated.
+      1. NOTE: This is called when an |EmptyStatement| tagged as being produced by a binary AST `FunctionBody` is evaluated.
       1. Assert: _f_ is a `FunctionBody`.
       1. Let _stmts_ be an empty Parse Node.
       1. If _f_ is a `FunctionBody`, then
@@ -1479,7 +1573,7 @@ interface VariableDeclarator : Node {
           1. Let _stmts_ be |StatementList| : _stmtItem_.
       1. Let _funcStmts_ be |FunctionStatementList| : stmts_.
       1. Let _funcBody_ be |FunctionBody| : _funcStmts_.
-      1. Perform ? CheckAssertedScope(_f_`.scope`, _funcBody_).
+      1. Perform ? CheckAssertedScope(_f_`.bodyScope`, _funcBody_).
       1. Perform ? DischargeOutstandingAssertedScopes(_funcBody_).
       1. Return _funcBody_.
     </emu-alg>
@@ -1562,15 +1656,15 @@ interface VariableDeclarator : Node {
     <emu-alg>
       1. Assert: _func_ is a `FunctionDeclaration`.
       1. Let _funcName_ be ? Ecmaify(_func_`.name`).
-      1. Let _params_ be ? Ecmaify(_func_`.params`).
+      1. Let _params_ be ? LazyFormalParametersEcmaify(_func_`.params`).
       1. If _func_`.isAsync` is *true*, then
-          1. Let _body_ be |AsyncFunctionBody| : ? LazyFunctionBodyEcmaify(_func_`.body`).
+          1. Let _body_ be |AsyncFunctionBody| : ? LazyFunctionBodyEcmaify(_func_`.body`, _func_).
           1. Return |AsyncFunctionDeclaration| : <emu-t>async</emu-t> <emu-t>function</emu-t> _funcName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
       1. Else if _func_`.isGenerator` is *true*, then
-          1. Let _body_ be |GeneratorBody| : ? LazyFunctionBodyEcmaify(_func_`.body`).
+          1. Let _body_ be |GeneratorBody| : ? LazyFunctionBodyEcmaify(_func_`.body`, _func_).
           1. Return |GeneratorDeclaration| : <emu-t>function</emu-t> <emu-t>`*`</emu-t> _funcName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
       1. Else,
-          1. Let _body_ be ? LazyFunctionBodyEcmaify(_func_`.body`).
+          1. Let _body_ be ? LazyFunctionBodyEcmaify(_func_`.body`, _func_).
           1. Return |FunctionDeclaration| : <emu-t>function</emu-t> _funcName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
     </emu-alg>
   </emu-clause>
@@ -1863,9 +1957,8 @@ interface VariableDeclarator : Node {
     <emu-alg>
       1. NOTE: Arrow expressions are canonicalized to use parenthesized parameters and braced bodies.
       1. Assert: _litArrow_ is an `ArrowExpression`.
-      1. Let _params0_ be |UniqueFormalParameters| : ? Ecmaify(_litArrow_`.params`).
-      1. Let _params_ be |ArrowFormalParameters| : <emu-t>(</emu-t> _params0_ <emu-t>)</emu-t>.
-      1. Let _lazyBody_ be ? LazyFunctionBodyEcmaify(_litArrow_`.body`).
+      1. Let _params_ be : ? LazyCoverArrowParameterListEcmaify(_litArrow_`.params`).
+      1. Let _lazyBody_ be ? LazyFunctionBodyEcmaify(_litArrow_`.body`, _litArrow_).
       1. If _litArrow_`.isAsync` is *true*, then
           1. Let _asyncHead_ be |AsyncArrowHead| : <emu-t>async</emu-t> _params_.
           1. Let _asyncBody0_ be |AsyncFunctionBody| : _lazyBody_.
@@ -2034,15 +2127,15 @@ interface VariableDeclarator : Node {
       1. Assert: _func_ is a `FunctionExpression`.
       1. Let _maybeFuncName_ be an empty Parse Node.
       1. If _func_`.name` not *null*, then set _maybeFuncName_ to ? Ecmaify(_func_`.name`).
-      1. Let _params_ be ? Ecmaify(_func_`.params`).
+      1. Let _params_ be ? LazyFormalParametersEcmaify(_func_`.params`).
       1. If _func_`.isAsync` is *true*, then
-          1. Let _body_ be |AsyncFunctionBody| : ? LazyFunctionBodyEcmaify(_func_`.body`).
+          1. Let _body_ be |AsyncFunctionBody| : ? LazyFunctionBodyEcmaify(_func_`.body`, _func_).
           1. Return |AsyncFunctionExpression| : <emu-t>async</emu-t> <emu-t>function</emu-t> _maybeFuncName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
       1. Else if _func_`.isGenerator` is *true*, then
-          1. Let _body_ be |GeneratorBody| : ? LazyFunctionBodyEcmaify(_func_`.body`).
+          1. Let _body_ be |GeneratorBody| : ? LazyFunctionBodyEcmaify(_func_`.body`, _func_).
           1. Return |GeneratorExpression| : <emu-t>function</emu-t> <emu-t>`*`</emu-t> _maybeFuncName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
       1. Else,
-          1. Let _body_ be ? LazyFunctionBodyEcmaify(_func_`.body`).
+          1. Let _body_ be ? LazyFunctionBodyEcmaify(_func_`.body`, _func_).
           1. Return |FunctionExpression| : <emu-t>function</emu-t> _maybeFuncName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
     </emu-alg>
   </emu-clause>
@@ -2203,20 +2296,18 @@ interface VariableDeclarator : Node {
     <emu-alg>
       1. Assert: _method_ is a `Method`.
       1. Let _name_ be |PropertyName| : ? Ecmaify(_method_`.name`).
-      1. Let _params0_ be ? Ecmaify(_method_`.params`).
+      1. Let _params_ be |UniqueFormalParameters| : ? LazyFormalParametersEcmaify(_method_`.params`).
       1. If _method_`.isAsync` is |true|, then
-          1. Let _params_ be |UniqueFormalParameters| : _params0_.
-          1. Let _body_ be |AsyncFunctionBody| : ? LazyFunctionBodyEcmaify(_method_`.body`).
+          1. Let _body_ be |AsyncFunctionBody| : ? LazyFunctionBodyEcmaify(_method_`.body`, _method_).
           1. Let _m_ be |AsyncMethod| : <emu-t>async</emu-t> _name_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
           1. Return |MethodDefinition| : _m_.
       1. Else if _method_`.isGenerator` is |true|, then
-          1. Let _params_ be |UniqueFormalParameters| : _params0_.
-          1. Let _body_ be |GeneratorBody| : ? LazyFunctionBodyEcmaify(_method_`.body`).
+          1. Let _body_ be |GeneratorBody| : ? LazyFunctionBodyEcmaify(_method_`.body`, _method_).
           1. Let _m_ |GeneratorMethod| : <emu-t>`*`</emu-t> _name_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
           1. Return |MethodDefinition| : _m_.
       1. Else,
-          1. Let _body_ be ? LazyFunctionBodyEcmaify(_method_`.body`).
-          1. Return |MethodDefinition| : _name_ <emu-t>(</emu-t> _params0_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
+          1. Let _body_ be ? LazyFunctionBodyEcmaify(_method_`.body`, _method_).
+          1. Return |MethodDefinition| : _name_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
     </emu-alg>
   </emu-clause>
 
@@ -2225,7 +2316,7 @@ interface VariableDeclarator : Node {
     <emu-alg>
       1. Assert: _getter_ is a `Getter`.
       1. Let _name_ be |PropertyName| : ? Ecmaify(_getter_`.name`).
-      1. Let _body_ be ? LazyFunctionBodyEcmaify(_getter_`.body`).
+      1. Let _body_ be ? LazyFunctionBodyEcmaify(_getter_`.body`, _getter_).
       1. Return |MethodDefinition| : <emu-t>get</emu-t> _name_ <emu-t>(</emu-t> <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
     </emu-alg>
   </emu-clause>
@@ -2235,8 +2326,8 @@ interface VariableDeclarator : Node {
     <emu-alg>
       1. Assert: _setter_ is a `Setter`.
       1. Let _name_ be |PropertyName| : ? Ecmaify(_setter_`.name`).
-      1. Let _param_ be |PropertySetParameterList| : ? Ecmaify(_setter_`.param`).
-      1. Let _body_ be ? LazyFunctionBodyEcmaify(_setter_`.body`).
+      1. Let _param_ be ? LazyPropertySetParameterListEcmaify(_setter_`.param`).
+      1. Let _body_ be ? LazyFunctionBodyEcmaify(_setter_`.body`, _setter_).
       1. Return |MethodDefinition| : <emu-t>set</emu-t> _name_ <emu-t>(</emu-t> _param_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
     </emu-alg>
   </emu-clause>
@@ -2391,24 +2482,6 @@ interface VariableDeclarator : Node {
     </emu-alg>
   </emu-clause>
 
-  <emu-clause id="sec-ecmaifyformalparameters" aoid="EcmaifyFormalParameters">
-    <h1>EcmaifyFormalParameters ( _params_ )</h1>
-    <emu-alg>
-      1. Assert: _params_ is a `FormalParameters`.
-      1. If _params_`.items` has length 0, then
-          1. If _params_`.rest` is null, then return |FormalParameters| :.
-          1. Else,
-              1. Let _rest_ be |FunctionRestParameter| : ? BindingRestElementEcmaify(_params_`.rest`).
-              1. Return |FormalParameters| : _rest_.
-      1. Else,
-          1. Let _list_ be ? FormalParameterListEcmaify(_params_`.items`).
-          1. If _params_`.rest` is null, then return |FormalParameters| : _list_.
-          1. Else,
-              1. Let _rest_ be |FunctionRestParameter| : ? BindingRestElementEcmaify(_params_`.rest`).
-              1. Return |FormalParameters| : _list_ <emu-t>,</emu-t> _rest_.
-    </emu-alg>
-  </emu-clause>
-
   <emu-clause id="sec-ecmaifycatchclause" aoid="EcmaifyCatchClause">
     <h1>EcmaifyCatchClause ( _catchClause_ )</h1>
     <emu-alg>
@@ -2432,9 +2505,7 @@ interface VariableDeclarator : Node {
     <h1>Ecmaify ( _node_ )</h1>
     <emu-alg>
       1. Assert: _node_ is a `Node`.
-      1. If _node_ is a `Script`, then return ? EcmaifyScript(_node_).
-      1. Else if _node_ is a `Module`, then return ? EcmaifyModule(_node_).
-      1. Else if _node_ is a `Block`, then return ? EcmaifyBlock(_node_).
+      1. If _node_ is a `Block`, then return ? EcmaifyBlock(_node_).
       1. Else if _node_ is a `BreakStatement`, then return ? EcmaifyBreakStatement(_node_).
       1. Else if _node_ is a `ContinueStatement`, then return ? EcmaifyContinueStatement(_node_).
       1. Else if _node_ is a `ClassDeclaration`, then return ? EcmaifyClassDeclaration(_node_).
@@ -2520,9 +2591,7 @@ interface VariableDeclarator : Node {
       1. Else if _node_ is a `ArrayAssignmentTarget`, then return ? EcmaifyArrayExpression(_node_).
       1. Else if _node_ is a `ClassElement`, then return ? EcmaifyClassElement(_node_).
       1. Else if _node_ is a `ForInOfBinding`, then return ? EcmaifyForInOfBinding(_node_).
-      1. Else if _node_ is a `Directive`, then return ? EcmaifyDirective(_node_).
-      1. Else if _node_ is a `FormalParameters`, then return ? EcmaifyFormalParameters(_node_).
-      1. Else return ? EcmaifyFunctionBody(_node_).
+      1. Else return ? EcmaifyDirective(_node_).
     </emu-alg>
   </emu-clause>
 
@@ -2607,27 +2676,42 @@ interface VariableDeclarator : Node {
       </emu-alg>
     </emu-clause>
 
+    <emu-clause id="sec-checkdeclarednames" aoid="CheckDeclaredNames">
+      <h1>CheckDeclaredNames ( _expectedDeclared_, _actualDeclared_ )</h1>
+      <emu-alg>
+        1. For each _dn_ in _actualDeclared_, do
+            1. If _dn_ is not in _expectedDeclared_, then throw a *SyntaxError* exception.
+            1. Remove _dn_ from _expectedDeclared_.
+        1. If _expectedDeclared_ has length greater than 0, then throw a *SyntaxError* exception.
+      </emu-alg>
+    </emu-clause>
+
     <emu-clause id="sec-checkassertedscope" aoid="CheckAssertedScope">
       <h1>CheckAssertedScope ( _scope_ , _parseTree_ )</h1>
       <emu-alg>
-        1. Assert: _scope_ is an `AssertedTopLevelScope?` or an `AssertedBlockScope?`.
+        1. Assert: _scope_ is an `AssertedBlockScope?` or an `AssertedVarScope?` or an `AssertedParameterScope?`.
         1. Assert: _parseTree_ is a non-empty Parse Node.
         1. If _scope_ is *null*, return.
+        1. Let _declaredNames_ be a new empty List.
+        1. If _scope_ is an `AssertedBlockScope` or an `AssertedVarScope`, then
+            1. If _scope_ is an `AssertedVarScope`, then
+                1. Append the elements of _scope_`.varDeclaredNames` to _declaredNames_.
+            1. Append the elements of _scope_`.lexicallyDeclaredNames` to _declaredNames_.
+        1. Else,
+            1. Append the elements of _scope_`.parameterNames` to _declaredNames_.
         1. NOTE: All captured names must be asserted bindings in the scope.
         1. For each String _cn_ in _scope_`.capturedNames`, do
-            1. If _cn_ is not in _scope_`.varDeclaredNames` and not in _scope_`.lexicallyDeclaredNames`, throw then a *SyntaxError* exception.
+            1. If _cn_ is not in _declaredNames_, then throw then a *SyntaxError* exception.
         1. NOTE: All asserted declared names must be declared.
-        1. If _scope_ is an `AssertedTopLevelScope`, then
-            1. Let _varDeclaredNames_ be the VarDeclaredNames of _parseTree_.
-            1. For each _vn_ in _varDeclaredNames_, do
-                1. If _vn_ is not in _scope_`.varDeclaredNames`, then throw a *SyntaxError* exception.
-                1. Remove _vn_ from _scope_`.varDeclaredNames`.
-        1. Let _lexDeclaredNames_ be the LexicallyDeclaredNames of _parseTree_.
-        1. For each _dn_ in _lexDeclaredNames_, do
-            1. If _dn_ is not in _scope_`.lexicallyDeclaredNames`, then throw a *SyntaxError* exception.
-            1. Remove _dn_ from _scope_`.lexicallyDeclaredNames`.
-        1. If _scope_`.varDeclaredNames` has length greater than 0, then throw a *SyntaxError* exception.
-        1. If _scope_`.lexicallyDeclaredNames` has length greater than 0, then throw a *SyntaxError* exception.
+        1. If _scope_ is an `AssertedBlockScope` or an `AssertedVarScope`, then
+            1. If _scope_ is an `AssertedVarScope`, then
+                1. Let _varDeclaredNames_ be the VarDeclaredNames of _parseTree_.
+                1. Perform ? CheckDeclaredNames(_scope_`.varDeclaredNames`, _varDeclaredNames_).
+            1. Let _lexDeclaredNames_ be the LexicallyDeclaredNames of _parseTree_.
+            1. Perform ? CheckDeclaredNames(_scope_`.lexicallyDeclaredNames`, _lexDeclaredNames_).
+        1. Else,
+            1. Let _paramNames_ be the BoundNames of _parseTree_.
+            1. Perform ? CheckDeclaredNames(_scope_`.parameterNames`, _paramNames_).
         1. NOTE: Presence of direct eval and veracity of captured names cannot be fully checked until inner functions are evaluated.
         1. Let _outstandingCapturedNames_ be a new empty List.
         1. Let _innerFunctions_ be a new empty List.
@@ -2640,7 +2724,6 @@ interface VariableDeclarator : Node {
             1. Perform ? AddGlobalOutstandingAssertedScope(_outstandingAssert_).
         1. If _scope_`.capturedNames` has length great than 0, then
             1. Perform ? AddGlobalOutstandingAssertedScope(_outstandingAssert_).
-
       </emu-alg>
     </emu-clause>
 
@@ -2812,19 +2895,155 @@ interface VariableDeclarator : Node {
     </emu-alg>
   </emu-clause>
 
-  <emu-clause id="sec-function-definitions-runtime-semantics-evaluatebody">
+  <emu-clause id="sec-validateearlyerrorsandupdatefunctionobject" aoid="ValidateEarlyErrorsAndUpdateFunctionObject">
+    <h1>ValidateEarlyErrorsAndUpdateFunctionObject ( _funcNode_ , _functionObject_, _body0_, _params_ )</h1>
+    <emu-alg>
+      1. Let _prod_ be an empty Parse Node.
+      1. Let _body_ be an empty Parse Node.
+      1. If _funcNode_ is a `FunctionDeclaration`, then
+          1. Let _funcName_ be ? Ecmaify(_funcNode_`.name`).
+          1. If _funcNode_`.isAsync` is *true*, then
+              1. Set _body_ toe |AsyncFunctionBody| : _body0_.
+              1. Set _prod_ |AsyncFunctionDeclaration| : <emu-t>async</emu-t> <emu-t>function</emu-t> _funcName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
+          1. Else if _funcNode_`.isGenerator` is *true*, then
+              1. Set _body_ to |GeneratorBody| : _body0_.
+              1. Set _prod_ to |GeneratorDeclaration| : <emu-t>function</emu-t> <emu-t>`*`</emu-t> _funcName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
+          1. Else,
+              1. Set _body_ to _body0_.
+              1. Set _prod_ to |FunctionDeclaration| : <emu-t>function</emu-t> _funcName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
+      1. Else if _funcNode_ is an `ArrowExpression`, then
+          1. If _funcNode_`.isAsync` is *true*, then
+              1. Let _asyncHead_ be |AsyncArrowHead| : <emu-t>async</emu-t> _params_.
+              1. Let _body1_ be |AsyncFunctionBody| : _body0_.
+              1. Set _body_ to |AsyncConciseBody| : <emu-t>{</emu-t> _body1_ <emu-t>}</emu-t>.
+              1. Set _prod_ to |AsyncArrowFunction| : _asyncHead_ <emu-t>=&gt;</emu-t> _body_.
+          1. Else,
+              1. Set _body_ to |ConciseBody| : <emu-t>{</emu-t> _body0_ <emu-t>}</emu-t>.
+              1. Set _prod_ to |ArrowFunction| : _params_ <emu-t>=&gt;</emu-t> _body_.
+      1. Else if _funcNode_ is a `FunctionExpression`, then
+          1. Let _maybeFuncName_ be an empty Parse Node.
+          1. If _funcNode_`.name` not *null*, then set _maybeFuncName_ to ? Ecmaify(_funcNode_`.name`).
+          1. If _funcNode_`.isAsync` is *true*, then
+              1. Set _body_ to |AsyncFunctionBody| : _body0_.
+              1. Set _prod_ to |AsyncFunctionExpression| : <emu-t>async</emu-t> <emu-t>function</emu-t> _maybeFuncName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
+          1. Else if _funcNode_`.isGenerator` is *true*, then
+              1. Set _body_ to |GeneratorBody| : _body0_.
+              1. Set _prod_ to |GeneratorExpression| : <emu-t>function</emu-t> <emu-t>`*`</emu-t> _maybeFuncName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
+          1. Else,
+              1. Set _body_ to _body0_.
+              1. Set _prod_ to |FunctionExpression| : <emu-t>function</emu-t> _maybeFuncName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
+      1. Else if _funcNode_ is a `Method`, then
+          1. Let _name_ be |PropertyName| : ? Ecmaify(_funcNode_`.name`).
+          1. If _funcNode_`.isAsync` is |true|, then
+              1. Set _body_ to |AsyncFunctionBody| : _body0_.
+              1. Let _m_ be |AsyncMethod| : <emu-t>async</emu-t> _name_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
+              1. Set _prod_ to |MethodDefinition| : _m_.
+          1. Else if _funcNode_`.isGenerator` is |true|, then
+              1. Set _body_ to |GeneratorBody| : _body0_.
+              1. Let _m_ |GeneratorMethod| : <emu-t>`*`</emu-t> _name_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
+              1. Set _prod_ to |MethodDefinition| : _m_.
+          1. Else,
+              1. Set _body_ to _body0_.
+              1. Set _prod_ to |MethodDefinition| : _name_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
+      1. Else if _funcNode_ is a `Getter`, then
+          1. Let _name_ be |PropertyName| : ? Ecmaify(_funcNode_`.name`).
+          1. Set _body_ to _body0_.
+          1. Set _prod_ to |MethodDefinition| : <emu-t>get</emu-t> _name_ <emu-t>(</emu-t> <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
+      1. Else,
+          1. Assert: _funcNode_ is a `Setter`.
+          1. Let _name_ be |PropertyName| : ? Ecmaify(_funcNode_`.name`).
+          1. Set _body_ to _body0_.
+          1. Set _prod_ to |MethodDefinition| : <emu-t>set</emu-t> _name_ <emu-t>(</emu-t> _param_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
+      1. Validate _prod_ for any Early Error conditions. If early errors were found, then throw a *SyntaxError* or a *ReferenceError* exception, depending on the type of the error.
+      1. Set _functionObject_.[[FormalParameters]] to _params_.
+      1. Set _functionObject_.[[ECMAScriptCode]] to _body_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-runtime-semantics-delazified">
+    <h1>Runtime Semantics: Delazify</h1>
+    <emu-see-also-para op="Delazify"></emu-see-also-para>
+    <p>Delazify is a new Runtime Semantics.</p>
+    <p>With parameter _functionObject_.</p>
+
+    <emu-grammar>FunctionBody : FunctionStatementList</emu-grammar>
+    <emu-alg>
+      1. If |FunctionStatementList| is a |StatementList| consisting of a single |EmptyStatement| that is tagged as being produced by AST nodes &laquo; _funcNode_, _parentAst_ &raquo; then
+          1. Assert: _funcNode_ is a `FunctionBody`.
+          1. Let _delazifiedParams_ be the result of Delazify on the Parse Node that is _functionObject_.[[FormalParameters]] passing _functionObject_.
+          1. Perform ? CheckAssertedScope(_funcNode_`.parameterScope`, _delazifiedParams_).
+          1. Let _delazifiedBody_ be ? EcmaifyFunctionBody(_funcNode_).
+          1. Perform ? ValidateEarlyErrorsAndUpdateFunctionObject(_parentAst_, _functionObject_, _delazifiedBody_, _delazifiedParams_).
+          1. Return |FunctionBody| : _delazifiedBody_.
+      1. Else return |FunctionBody|.
+    </emu-alg>
+
+    <emu-grammar>FormalParameters : [empty]</emu-grammar>
+    <emu-alg>
+      1. If |FormalParameters| is tagged as being produced by an AST node _paramAst_, then
+          1. Return ? EcmaifyFormalParameters(_paramsAst_).
+      1. Else return |FormalParameters|.
+    </emu-alg>
+
+    <emu-grammar>UniqueFormalParameters : FormalParameters</emu-grammar>
+    <emu-alg>
+      1. Return the result of Delazify of |FormalParameters|.
+    </emu-alg>
+
+    <emu-grammar>ArrowParameters : CoverParenthesizedExpressionAndArrowParameterList</emu-grammar>
+    <emu-alg>
+      1. If |ArrowParameters| is tagged as being produced by an AST node _paramAst_, then
+          1. Return ? EcmaifyCoverArrowParameterList(_paramsAst_).
+      1. Else return |ArrowParameters|.
+    </emu-alg>
+
+    <emu-grammar>PropertySetParameterList : FormalParameter</emu-grammar>
+    <emu-alg>
+      1. If |PropertySetParameterList| is tagged as being produced by an AST node _paramAst_, then
+          1. Return ? EcmaifyPropertySetParameterList(_paramsAst_).
+      1. Else return |PropertySetParameterList|.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-runtime-semantics-evaluatebody">
     <h1>Runtime Semantics: EvaluateBody</h1>
     <p>The runtime semantics of |FunctionBody| is modified as follows.</p>
     <p>With parameters _functionObject_ and List _argumentsList_.</p>
     <emu-grammar>FunctionBody : FunctionStatementList</emu-grammar>
     <emu-alg>
-      1. If |FunctionStatementList| is a |StatementList| consisting of a single |EmptyStatement| that is tagged as being produced by an AST _ast_, then
-          1. Assert: _ast_ is a `FunctionBody`.
-          1. Let _delazifiedBody_ be ? EcmaifyFunctionBody(_ast_).
-          1. Replace |FunctionBody| by _delazifiedBody_.
-      1. Perform ? FunctionDeclarationInstantiation(_functionObject_, _argumentsList_).
-      1. Return the result of evaluating |FunctionStatementList|.
+      1. <ins>Let _delazifiedBody_ be the Parse Node that is the result of Delazify of |FunctionBody|.</ins>
+      1. <ins>If _delazifiedBody_ is a different Parse Node from |FunctionBody|, then</ins>
+          1. <ins>Return the result of EvaluateBody of the Parse Node that is _functionObject_.[[ECMAScriptCode]] passing _functionObject_ and _argumentsList_.</ins>
+      1. <ins>Else,</ins>
+          1. Perform ? FunctionDeclarationInstantiation(_functionObject_, _argumentsList_).
+          1. Return the result of evaluating |FunctionStatementList|.
+    </emu-alg>
+
+    <emu-grammar>GeneratorBody : FunctionBody</emu-grammar>
+    <emu-alg>
+      1. <ins>Let _delazifiedBody_ be the Parse Node that is the result of Delazify of |FunctionBody|.</ins>
+      1. <ins>If _delazifiedBody_ is a different Parse Node from |FunctionBody|, then</ins>
+          1. <ins>Return the result of EvaluateBody of the Parse Node that is _functionObject_.[[ECMAScriptCode]] passing _functionObject_ and _argumentsList_.</ins>
+      1. <ins>Else,</ins>
+          1. Perform ? FunctionDeclarationInstantiation(_functionObject_, _argumentsList_).
+          1. Let _G_ be ? OrdinaryCreateFromConstructor(_functionObject_, `"%GeneratorPrototype%"`, &laquo; [[GeneratorState]], [[GeneratorContext]] &raquo;).
+          1. Perform GeneratorStart(_G_, |FunctionBody|).
+          1. Return Completion{[[Type]]: ~return~, [[Value]]: _G_, [[Target]]: ~empty~}.
+    </emu-alg>
+
+    <emu-grammar>AsyncFunctionBody : FunctionBody</emu-grammar>
+    <emu-alg>
+      1. <ins>Let _delazifiedBody_ be the Parse Node that is the result of Delazify of |FunctionBody|.</ins>
+      1. <ins>If _delazifiedBody_ is a different Parse Node from |FunctionBody|, then</ins>
+          1. <ins>Return the result of EvaluateBody of the Parse Node that is _functionObject_.[[ECMAScriptCode]] passing _functionObject_ and _argumentsList_.</ins>
+      1. <ins>Else,</ins>
+          1. Let _promiseCapability_ be ! NewPromiseCapability(%Promise%).
+          1. Let _declResult_ be FunctionDeclarationInstantiation(_functionObject_, _argumentsList_).
+          1. If _declResult_ is not an abrupt completion, then
+            1. Perform ! AsyncFunctionStart(_promiseCapability_, |FunctionBody|).
+          1. Else _declResult_ is an abrupt completion,
+            1. Perform ! Call(_promiseCapability_.[[Reject]], *undefined*, &laquo;_declResult_.[[Value]]&raquo;).
+          1. Return Completion{[[Type]]: ~return~, [[Value]]: _promiseCapability_.[[Promise]], [[Target]]: ~empty~}.
     </emu-alg>
   </emu-clause>
-
 </emu-clause>
