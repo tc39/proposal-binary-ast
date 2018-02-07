@@ -111,7 +111,6 @@ interface AssertedBlockScope {
   // checked lazily as inner functions are invoked
   attribute FrozenArray&lt;IdentifierName&gt; capturedNames;
   attribute boolean hasDirectEval;
-  attribute boolean hasDirectSuper;
 };
 
 interface AssertedVarScope {
@@ -122,7 +121,6 @@ interface AssertedVarScope {
   // checked lazily as inner functions are invoked
   attribute FrozenArray&lt;IdentifierName&gt; capturedNames;
   attribute boolean hasDirectEval;
-  attribute boolean hasDirectSuper;
 };
 
 interface AssertedParameterScope {
@@ -132,7 +130,6 @@ interface AssertedParameterScope {
   // checked lazily as inner functions are invoked
   attribute FrozenArray&lt;IdentifierName&gt; capturedNames;
   attribute boolean hasDirectEval;
-  attribute boolean hasDirectSuper;
 };
 
 // nodes
