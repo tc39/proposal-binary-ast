@@ -451,20 +451,25 @@ interface Method : Node {
   attribute boolean isAsync;
   // True for `GeneratorMethod`, false otherwise.
   attribute boolean isGenerator;
-  // The `UniqueFormalParameters`.
+  attribute AssertedParameterScope? parameterScope;
+  attribute AssertedVarScope? bodyScope;
   attribute PropertyName name;
+  // The `UniqueFormalParameters`.
   attribute FormalParameters params;
   attribute FunctionBody body;
 };
 
 // `get PropertyName ( ) { FunctionBody }`
 interface Getter : Node {
+  attribute AssertedVarScope? bodyScope;
   attribute PropertyName name;
   attribute FunctionBody body;
 };
 
 // `set PropertyName ( PropertySetParameterList ) { FunctionBody }`
 interface Setter : Node {
+  attribute AssertedParameterScope? parameterScope;
+  attribute AssertedVarScope? bodyScope;
   attribute PropertyName name;
   // The `PropertySetParameterList`.
   attribute Parameter param;
@@ -537,6 +542,8 @@ interface ArrayExpression : Node {
 interface ArrowExpression : Node {
   // True for `AsyncArrowFunction`, false otherwise.
   attribute boolean isAsync;
+  attribute AssertedParameterScope? parameterScope;
+  attribute AssertedVarScope? bodyScope;
   attribute FormalParameters params;
   attribute (FunctionBody or Expression) body;
 };
@@ -1388,16 +1395,14 @@ interface VariableDeclarator : Node {
   </emu-clause>
 
   <emu-clause id="sec-lazyfunctionbodyecmaify" aoid="LazyFunctionBodyEcmaify">
-    <h1>LazyFunctionBodyEcmaify ( _f_ , _parent_ )</h1>
+    <h1>LazyFunctionBodyEcmaify ( _parent_ )</h1>
     <emu-alg>
-      1. NOTE: When a |FunctionBody| tagged as being produced by a binary AST `FunctionBody` is evaluated at runtime, Ecmaify is run on the function at that time to delazify.
-      1. NOTE: The _parent_ is used to determine the production to use when validating early error rules during delazifying.
-      1. Assert: _f_ is a `FunctionBody` or an `Expression`.
+      1. NOTE: When a |FunctionBody| tagged as being produced by a binary AST is evaluated at runtime, Ecmaify is run on the function at that time to delazify.
       1. Let _emptyStmt_ be |StatementListItem| : |EmptyStatement|.
       1. Let _stmts_ be |StatementList| : _emptyStmt_.
-      1. Let _funcStmts_ be |FunctionStatementList| : _stmts_
+      1. Let _funcStmts_ be |FunctionStatementList| : _stmts_.
       1. Let _body_ be |FunctionBody| : _funcStmts_.
-      1. Tag _body_ as being produced by &laquo; _f_, _parent_ &raquo;.
+      1. Tag _body_ as being produced by _parent_.
       1. Return _body_.
     </emu-alg>
   </emu-clause>
@@ -1561,7 +1566,7 @@ interface VariableDeclarator : Node {
     <h1>EcmaifyFunctionBody ( _f_ )</h1>
     <emu-alg>
       1. NOTE: This is called when an |EmptyStatement| tagged as being produced by a binary AST `FunctionBody` is evaluated.
-      1. Assert: _f_ is a `FunctionBody`.
+      1. Assert: _f_ is a `FunctionBody` or an `Expression`.
       1. Let _stmts_ be an empty Parse Node.
       1. If _f_ is a `FunctionBody`, then
           1. If HasMalformedDirectives(_f_`.directives`, _f_`.statements`) is *true*, throw a *SyntaxError* exception.
@@ -1572,10 +1577,7 @@ interface VariableDeclarator : Node {
           1. Let _stmtItem_ be |StatementListItem| : _stmt_.
           1. Let _stmts_ be |StatementList| : _stmtItem_.
       1. Let _funcStmts_ be |FunctionStatementList| : stmts_.
-      1. Let _funcBody_ be |FunctionBody| : _funcStmts_.
-      1. Perform ? CheckAssertedScope(_f_`.bodyScope`, _funcBody_).
-      1. Perform ? DischargeOutstandingAssertedScopes(_funcBody_).
-      1. Return _funcBody_.
+      1. Return |FunctionBody| : _funcStmts_.
     </emu-alg>
   </emu-clause>
 
@@ -1658,13 +1660,13 @@ interface VariableDeclarator : Node {
       1. Let _funcName_ be ? Ecmaify(_func_`.name`).
       1. Let _params_ be ? LazyFormalParametersEcmaify(_func_`.params`).
       1. If _func_`.isAsync` is *true*, then
-          1. Let _body_ be |AsyncFunctionBody| : ? LazyFunctionBodyEcmaify(_func_`.body`, _func_).
+          1. Let _body_ be |AsyncFunctionBody| : ? LazyFunctionBodyEcmaify(_func_).
           1. Return |AsyncFunctionDeclaration| : <emu-t>async</emu-t> <emu-t>function</emu-t> _funcName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
       1. Else if _func_`.isGenerator` is *true*, then
-          1. Let _body_ be |GeneratorBody| : ? LazyFunctionBodyEcmaify(_func_`.body`, _func_).
+          1. Let _body_ be |GeneratorBody| : ? LazyFunctionBodyEcmaify(_func_).
           1. Return |GeneratorDeclaration| : <emu-t>function</emu-t> <emu-t>`*`</emu-t> _funcName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
       1. Else,
-          1. Let _body_ be ? LazyFunctionBodyEcmaify(_func_`.body`, _func_).
+          1. Let _body_ be ? LazyFunctionBodyEcmaify(_func_).
           1. Return |FunctionDeclaration| : <emu-t>function</emu-t> _funcName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
     </emu-alg>
   </emu-clause>
@@ -1958,7 +1960,7 @@ interface VariableDeclarator : Node {
       1. NOTE: Arrow expressions are canonicalized to use parenthesized parameters and braced bodies.
       1. Assert: _litArrow_ is an `ArrowExpression`.
       1. Let _params_ be : ? LazyCoverArrowParameterListEcmaify(_litArrow_`.params`).
-      1. Let _lazyBody_ be ? LazyFunctionBodyEcmaify(_litArrow_`.body`, _litArrow_).
+      1. Let _lazyBody_ be ? LazyFunctionBodyEcmaify(_litArrow_).
       1. If _litArrow_`.isAsync` is *true*, then
           1. Let _asyncHead_ be |AsyncArrowHead| : <emu-t>async</emu-t> _params_.
           1. Let _asyncBody0_ be |AsyncFunctionBody| : _lazyBody_.
@@ -2129,13 +2131,13 @@ interface VariableDeclarator : Node {
       1. If _func_`.name` not *null*, then set _maybeFuncName_ to ? Ecmaify(_func_`.name`).
       1. Let _params_ be ? LazyFormalParametersEcmaify(_func_`.params`).
       1. If _func_`.isAsync` is *true*, then
-          1. Let _body_ be |AsyncFunctionBody| : ? LazyFunctionBodyEcmaify(_func_`.body`, _func_).
+          1. Let _body_ be |AsyncFunctionBody| : ? LazyFunctionBodyEcmaify(_func_).
           1. Return |AsyncFunctionExpression| : <emu-t>async</emu-t> <emu-t>function</emu-t> _maybeFuncName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
       1. Else if _func_`.isGenerator` is *true*, then
-          1. Let _body_ be |GeneratorBody| : ? LazyFunctionBodyEcmaify(_func_`.body`, _func_).
+          1. Let _body_ be |GeneratorBody| : ? LazyFunctionBodyEcmaify(_func_).
           1. Return |GeneratorExpression| : <emu-t>function</emu-t> <emu-t>`*`</emu-t> _maybeFuncName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
       1. Else,
-          1. Let _body_ be ? LazyFunctionBodyEcmaify(_func_`.body`, _func_).
+          1. Let _body_ be ? LazyFunctionBodyEcmaify(_func_).
           1. Return |FunctionExpression| : <emu-t>function</emu-t> _maybeFuncName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
     </emu-alg>
   </emu-clause>
@@ -2298,15 +2300,15 @@ interface VariableDeclarator : Node {
       1. Let _name_ be |PropertyName| : ? Ecmaify(_method_`.name`).
       1. Let _params_ be |UniqueFormalParameters| : ? LazyFormalParametersEcmaify(_method_`.params`).
       1. If _method_`.isAsync` is |true|, then
-          1. Let _body_ be |AsyncFunctionBody| : ? LazyFunctionBodyEcmaify(_method_`.body`, _method_).
+          1. Let _body_ be |AsyncFunctionBody| : ? LazyFunctionBodyEcmaify(_method_).
           1. Let _m_ be |AsyncMethod| : <emu-t>async</emu-t> _name_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
           1. Return |MethodDefinition| : _m_.
       1. Else if _method_`.isGenerator` is |true|, then
-          1. Let _body_ be |GeneratorBody| : ? LazyFunctionBodyEcmaify(_method_`.body`, _method_).
+          1. Let _body_ be |GeneratorBody| : ? LazyFunctionBodyEcmaify(_method_).
           1. Let _m_ |GeneratorMethod| : <emu-t>`*`</emu-t> _name_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
           1. Return |MethodDefinition| : _m_.
       1. Else,
-          1. Let _body_ be ? LazyFunctionBodyEcmaify(_method_`.body`, _method_).
+          1. Let _body_ be ? LazyFunctionBodyEcmaify(_method_).
           1. Return |MethodDefinition| : _name_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
     </emu-alg>
   </emu-clause>
@@ -2316,7 +2318,7 @@ interface VariableDeclarator : Node {
     <emu-alg>
       1. Assert: _getter_ is a `Getter`.
       1. Let _name_ be |PropertyName| : ? Ecmaify(_getter_`.name`).
-      1. Let _body_ be ? LazyFunctionBodyEcmaify(_getter_`.body`, _getter_).
+      1. Let _body_ be ? LazyFunctionBodyEcmaify(_getter_).
       1. Return |MethodDefinition| : <emu-t>get</emu-t> _name_ <emu-t>(</emu-t> <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
     </emu-alg>
   </emu-clause>
@@ -2327,7 +2329,7 @@ interface VariableDeclarator : Node {
       1. Assert: _setter_ is a `Setter`.
       1. Let _name_ be |PropertyName| : ? Ecmaify(_setter_`.name`).
       1. Let _param_ be ? LazyPropertySetParameterListEcmaify(_setter_`.param`).
-      1. Let _body_ be ? LazyFunctionBodyEcmaify(_setter_`.body`, _setter_).
+      1. Let _body_ be ? LazyFunctionBodyEcmaify(_setter_).
       1. Return |MethodDefinition| : <emu-t>set</emu-t> _name_ <emu-t>(</emu-t> _param_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
     </emu-alg>
   </emu-clause>
@@ -2807,6 +2809,7 @@ interface VariableDeclarator : Node {
         <emu-alg>
           1. Let _freeNames_ be FreeNames of |StatementList|.
           1. Append to _freeNames_ the elements of the FreeNames of |StatementListItem|.
+          1. Remove duplicate entries from _freeNames_.
           1. Return _freeNames_.
         </emu-alg>
       </emu-clause>
@@ -2895,8 +2898,8 @@ interface VariableDeclarator : Node {
     </emu-alg>
   </emu-clause>
 
-  <emu-clause id="sec-validateearlyerrorsandupdatefunctionobject" aoid="ValidateEarlyErrorsAndUpdateFunctionObject">
-    <h1>ValidateEarlyErrorsAndUpdateFunctionObject ( _funcNode_ , _functionObject_, _body0_, _params_ )</h1>
+  <emu-clause id="sec-validateandupdatefunctionobject" aoid="ValidateAndUpdateFunctionObject">
+    <h1>ValidateAndUpdateFunctionObject ( _funcNode_ , _functionObject_, _body0_, _params_ )</h1>
     <emu-alg>
       1. Let _prod_ be an empty Parse Node.
       1. Let _body_ be an empty Parse Node.
@@ -2956,7 +2959,7 @@ interface VariableDeclarator : Node {
           1. Set _prod_ to |MethodDefinition| : <emu-t>set</emu-t> _name_ <emu-t>(</emu-t> _param_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
       1. Validate _prod_ for any Early Error conditions. If early errors were found, then throw a *SyntaxError* or a *ReferenceError* exception, depending on the type of the error.
       1. Set _functionObject_.[[FormalParameters]] to _params_.
-      1. Set _functionObject_.[[ECMAScriptCode]] to _body_.
+      1. Set _functionObject_.[[ECMAScriptCode]] to _prod_.
     </emu-alg>
   </emu-clause>
 
@@ -2968,12 +2971,14 @@ interface VariableDeclarator : Node {
 
     <emu-grammar>FunctionBody : FunctionStatementList</emu-grammar>
     <emu-alg>
-      1. If |FunctionStatementList| is a |StatementList| consisting of a single |EmptyStatement| that is tagged as being produced by AST nodes &laquo; _funcNode_, _parentAst_ &raquo; then
-          1. Assert: _funcNode_ is a `FunctionBody`.
+      1. If |FunctionStatementList| is a |StatementList| consisting of a single |EmptyStatement| that is tagged as being produced by _funcNode_, then
           1. Let _delazifiedParams_ be the result of Delazify on the Parse Node that is _functionObject_.[[FormalParameters]] passing _functionObject_.
-          1. Perform ? CheckAssertedScope(_funcNode_`.parameterScope`, _delazifiedParams_).
-          1. Let _delazifiedBody_ be ? EcmaifyFunctionBody(_funcNode_).
-          1. Perform ? ValidateEarlyErrorsAndUpdateFunctionObject(_parentAst_, _functionObject_, _delazifiedBody_, _delazifiedParams_).
+          1. Let _delazifiedBody_ be ? EcmaifyFunctionBody(_funcNode_`.body`).
+          1. Perform ? ValidateAndUpdateFunctionObject(_funcNode_, _functionObject_, _delazifiedBody_, _delazifiedParams_).
+          1. If _funcNode_ is not a `Getter`, then
+              1. Perform ? CheckAssertedScope(_funcNode_`.parameterScope`, _delazifiedParams_).
+          1. Perform ? CheckAssertedScope(_funcNode_`.bodyScope`, _delazifiedBody_).
+          1. Perform ? DischargeOutstandingAssertedScopes(_delazifiedBody_).
           1. Return |FunctionBody| : _delazifiedBody_.
       1. Else return |FunctionBody|.
     </emu-alg>
