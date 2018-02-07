@@ -2287,6 +2287,7 @@ interface VariableDeclarator : Node {
     <emu-alg>
       1. NOTE: Literal property names are canonicalized to double quoted string literals.
       1. Assert: _name_ is a `LiteralPropertyName`.
+      1. If _name_`.value` is the empty string, then throw a *SyntaxError* exception.
       1. Let _v_ be the value of _name_`.value` escaped for double quotes.
       1. Let _l_ be |StringLiteral| : <emu-t>"</emu-t> _v_ <emu-t>"</emu-t>.
       1. Return |LiteralPropertyName| : _l_.
@@ -2963,7 +2964,7 @@ interface VariableDeclarator : Node {
     </emu-alg>
   </emu-clause>
 
-  <emu-clause id="sec-runtime-semantics-delazified">
+  <emu-clause id="sec-runtime-semantics-delazify">
     <h1>Runtime Semantics: Delazify</h1>
     <emu-see-also-para op="Delazify"></emu-see-also-para>
     <p>Delazify is a new Runtime Semantics.</p>
