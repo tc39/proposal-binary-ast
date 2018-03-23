@@ -217,6 +217,26 @@
 
 <span class="hljs-keyword">typedef</span> (ImportNamespace <span class="hljs-keyword">or</span> Import) ImportDeclaration;
 
+<span class="hljs-keyword">typedef</span> (EagerFunctionDeclaration <span class="hljs-keyword">or</span>
+         SkippableFunctionDeclaration)
+        FunctionDeclaration;
+
+<span class="hljs-keyword">typedef</span> (EagerFunctionExpression <span class="hljs-keyword">or</span>
+         SkippableFunctionExpression)
+        FunctionExpression;
+
+<span class="hljs-keyword">typedef</span> (EagerMethod <span class="hljs-keyword">or</span>
+         SkippableMethod)
+        Method;
+
+<span class="hljs-keyword">typedef</span> (EagerGetter <span class="hljs-keyword">or</span>
+         SkippableGetter)
+        Getter;
+
+<span class="hljs-keyword">typedef</span> (EagerSetter <span class="hljs-keyword">or</span>
+         SkippableSetter)
+        Setter;
+
 
 <span class="hljs-comment">// bindings</span>
 
@@ -439,7 +459,7 @@
 <span class="hljs-comment">// `MethodDefinition :: PropertyName ( UniqueFormalParameters ) { FunctionBody }`,</span>
 <span class="hljs-comment">// `GeneratorMethod :: * PropertyName ( UniqueFormalParameters ) { GeneratorBody }`,</span>
 <span class="hljs-comment">// `AsyncMethod :: async PropertyName ( UniqueFormalParameters ) { AsyncFunctionBody }`</span>
-<span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">Method</span> : <span class="hljs-title">Node</span> {</span>
+<span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">EagerMethod</span> : <span class="hljs-title">Node</span> {</span>
   <span class="hljs-comment">// True for `AsyncMethod`, false otherwise.</span>
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">boolean</span> isAsync;
   <span class="hljs-comment">// True for `GeneratorMethod`, false otherwise.</span>
@@ -451,22 +471,32 @@
   <span class="hljs-keyword">attribute</span> FormalParameters params;
   <span class="hljs-keyword">attribute</span> FunctionBody body;
 };
+<span class="hljs-meta">[Skippable]</span> <span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">SkippableMethod</span> : <span class="hljs-title">Node</span> {</span>
+  <span class="hljs-keyword">attribute</span> EagerMethod eager;
+};
 
 <span class="hljs-comment">// `get PropertyName ( ) { FunctionBody }`</span>
-<span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">Getter</span> : <span class="hljs-title">Node</span> {</span>
+<span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">EagerGetter</span> : <span class="hljs-title">Node</span> {</span>
   <span class="hljs-keyword">attribute</span> AssertedVarScope? bodyScope;
   <span class="hljs-keyword">attribute</span> PropertyName name;
   <span class="hljs-keyword">attribute</span> FunctionBody body;
 };
+<span class="hljs-meta">[Skippable]</span> <span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">SkippableGetter</span> : <span class="hljs-title">Node</span> {</span>
+  <span class="hljs-keyword">attribute</span> EagerGetter eager;
+};
+
 
 <span class="hljs-comment">// `set PropertyName ( PropertySetParameterList ) { FunctionBody }`</span>
-<span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">Setter</span> : <span class="hljs-title">Node</span> {</span>
+<span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">EagerSetter</span> : <span class="hljs-title">Node</span> {</span>
   <span class="hljs-keyword">attribute</span> AssertedParameterScope? parameterScope;
   <span class="hljs-keyword">attribute</span> AssertedVarScope? bodyScope;
   <span class="hljs-keyword">attribute</span> PropertyName name;
   <span class="hljs-comment">// The `PropertySetParameterList`.</span>
   <span class="hljs-keyword">attribute</span> Parameter param;
   <span class="hljs-keyword">attribute</span> FunctionBody body;
+};
+<span class="hljs-meta">[Skippable]</span> <span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">SkippableSetter</span> : <span class="hljs-title">Node</span> {</span>
+  <span class="hljs-keyword">attribute</span> EagerSetter eager;
 };
 
 <span class="hljs-comment">// `PropertyDefinition :: PropertyName : AssignmentExpression`</span>
@@ -602,7 +632,7 @@
 <span class="hljs-comment">// `FunctionExpression`,</span>
 <span class="hljs-comment">// `GeneratorExpression`,</span>
 <span class="hljs-comment">// `AsyncFunctionExpression`,</span>
-<span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">FunctionExpression</span> : <span class="hljs-title">Node</span> {</span>
+<span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">EagerFunctionExpression</span> : <span class="hljs-title">Node</span> {</span>
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">boolean</span> isAsync;
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">boolean</span> isGenerator;
   <span class="hljs-keyword">attribute</span> AssertedParameterScope? parameterScope;
@@ -610,6 +640,9 @@
   <span class="hljs-keyword">attribute</span> BindingIdentifier? name;
   <span class="hljs-keyword">attribute</span> FormalParameters params;
   <span class="hljs-keyword">attribute</span> FunctionBody body;
+};
+<span class="hljs-meta">[Skippable]</span> <span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">SkippableFunctionExpression</span> : <span class="hljs-title">Node</span> {</span>
+  <span class="hljs-keyword">attribute</span> EagerFunctionExpression eager;
 };
 
 <span class="hljs-comment">// `IdentifierReference`</span>
@@ -848,7 +881,7 @@
 <span class="hljs-comment">// `FunctionDeclaration`,</span>
 <span class="hljs-comment">// `GeneratorDeclaration`,</span>
 <span class="hljs-comment">// `AsyncFunctionDeclaration`</span>
-<span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">FunctionDeclaration</span> : <span class="hljs-title">Node</span> {</span>
+<span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">EagerFunctionDeclaration</span> : <span class="hljs-title">Node</span> {</span>
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">boolean</span> isAsync;
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">boolean</span> isGenerator;
   <span class="hljs-keyword">attribute</span> AssertedParameterScope? parameterScope;
@@ -857,6 +890,11 @@
   <span class="hljs-keyword">attribute</span> FormalParameters params;
   <span class="hljs-keyword">attribute</span> FunctionBody body;
 };
+
+<span class="hljs-meta">[Skippable]</span> <span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">SkippableFunctionDeclaration</span> : <span class="hljs-title">Node</span> {</span>
+  <span class="hljs-keyword">attribute</span> EagerFunctionDeclaration eager;
+};
+
 
 <span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">Script</span> : <span class="hljs-title">Node</span> {</span>
   <span class="hljs-keyword">attribute</span> AssertedVarScope? scope;
@@ -1439,7 +1477,8 @@
 
   <emu-clause id="sec-ecmaifyfunctionexpression" aoid="EcmaifyFunctionExpression">
     <h1><span class="secnum">2.89</span>EcmaifyFunctionExpression ( <var>func</var> )</h1>
-    <emu-alg><ol><li>Assert: <var>func</var> is a <code>FunctionExpression</code>.</li><li>Let <var>maybeFuncName</var> be an empty Parse Node.</li><li>If <var>func</var><code>.name</code> not <emu-val>null</emu-val>, then set <var>maybeFuncName</var> to ?&nbsp;<emu-xref aoid="Ecmaify" id="_ref_178"><a href="#sec-ecmaify">Ecmaify</a></emu-xref>(<var>func</var><code>.name</code>).</li><li>Let <var>params</var> be ?&nbsp;<emu-xref aoid="LazyFormalParametersEcmaify" id="_ref_179"><a href="#sec-lazyformalparametersecmaify">LazyFormalParametersEcmaify</a></emu-xref>(<var>func</var><code>.params</code>).</li><li>If <var>func</var><code>.isAsync</code> is <emu-val>true</emu-val>, then<ol><li>Let <var>body</var> be <emu-nt id="_ref_373"><a href="#prod-AsyncFunctionBody">AsyncFunctionBody</a></emu-nt> : ?&nbsp;<emu-xref aoid="LazyFunctionBodyEcmaify" id="_ref_180"><a href="#sec-lazyfunctionbodyecmaify">LazyFunctionBodyEcmaify</a></emu-xref>(<var>func</var>).</li><li>Return <emu-nt><a href="https://tc39.github.io/ecma262/#prod-AsyncFunctionExpression">AsyncFunctionExpression</a></emu-nt> : <emu-t>async</emu-t> <emu-t>function</emu-t> <var>maybeFuncName</var> <emu-t>(</emu-t> <var>params</var> <emu-t>)</emu-t> <emu-t>{</emu-t> <var>body</var> <emu-t>}</emu-t>.</li></ol></li><li>Else if <var>func</var><code>.isGenerator</code> is <emu-val>true</emu-val>, then<ol><li>Let <var>body</var> be <emu-nt id="_ref_374"><a href="#prod-GeneratorBody">GeneratorBody</a></emu-nt> : ?&nbsp;<emu-xref aoid="LazyFunctionBodyEcmaify" id="_ref_181"><a href="#sec-lazyfunctionbodyecmaify">LazyFunctionBodyEcmaify</a></emu-xref>(<var>func</var>).</li><li>Return <emu-nt><a href="https://tc39.github.io/ecma262/#prod-GeneratorExpression">GeneratorExpression</a></emu-nt> : <emu-t>function</emu-t> <emu-t><code>*</code></emu-t> <var>maybeFuncName</var> <emu-t>(</emu-t> <var>params</var> <emu-t>)</emu-t> <emu-t>{</emu-t> <var>body</var> <emu-t>}</emu-t>.</li></ol></li><li>Else,<ol><li>Let <var>body</var> be ?&nbsp;<emu-xref aoid="LazyFunctionBodyEcmaify" id="_ref_182"><a href="#sec-lazyfunctionbodyecmaify">LazyFunctionBodyEcmaify</a></emu-xref>(<var>func</var>).</li><li>Return <emu-nt><a href="https://tc39.github.io/ecma262/#prod-FunctionExpression">FunctionExpression</a></emu-nt> : <emu-t>function</emu-t> <var>maybeFuncName</var> <emu-t>(</emu-t> <var>params</var> <emu-t>)</emu-t> <emu-t>{</emu-t> <var>body</var> <emu-t>}</emu-t>.
+    <emu-alg><ol><li>Assert: <var>func</var> is a <code>FunctionExpression</code>.</li><li>Let <var>maybeFuncName</var> be an empty Parse Node.</li><li>If <var>func</var><code>.name</code> not <emu-val>null</emu-val>, then set <var>maybeFuncName</var> to ?&nbsp;<emu-xref aoid="Ecmaify" id="_ref_178"><a href="#sec-ecmaify">Ecmaify</a></emu-xref>(<var>func</var><code>.name</code>).</li><li>Let <var>params</var> be ?&nbsp;<emu-xref aoid="LazyFormalParametersEcmaify" id="_ref_179"><a href="#sec-lazyformalparametersecmaify">LazyFormalParametersEcmaify</a></emu-xref>(<var>func</var><code>.params</code>).</li><li>If <var>func</var><code>.isAsync</code> is <emu-val>true</emu-val>, then<ol><li>Let <var>body</var> be <emu-nt id="_ref_373"><a href="#prod-AsyncFunctionBody">AsyncFunctionBody</a></emu-nt> : ?&nbsp;<emu-xref aoid="LazyFunctionBodyEcmaify" id="_ref_180"><a href="#sec-lazyfunctionbodyecmaify">LazyFunctionBodyEcmaify</a></emu-xref>(<var>func</var>).</li><li>Return <emu-nt><a href="https://tc39.github.io/ecma262/#prod-AsyncFunctionExpression">AsyncFunctionExpression</a></emu-nt> : <emu-t>async</emu-t> <emu-t>function</emu-t> <var>maybeFuncName</var> <emu-t>(</emu-t> <var>params</var> <emu-t>)</emu-t> <emu-t>{</emu-t> <var>body</var> <emu-t>}</emu-t>.</li></ol></li><li>Else if <var>func</var><code>.isGenerator</code> is <emu-val>true</emu-val>, then<ol><li>Let <var>body</var> be <emu-nt id="_ref_374"><a href="#prod-GeneratorBody">GeneratorBody</a></emu-nt> : ?&nbsp;<emu-xref aoid="LazyFunctionBodyEcmaify" id="_ref_181"><a href="#sec-lazyfunctionbodyecmaify">LazyFunctionBodyEcmaify</a></emu-xref>(<var>func</var>).</li><li>Return <emu-nt><a href="https://tc39.github.io/ecma262/#prod-GeneratorExpression">GeneratorExpression</a></emu-nt> : <emu-t>function</emu-t> <emu-t><code>*</code></emu-t> <var>maybeFuncName</var> <emu-t>(</emu-t> <var>params</var> <emu-t>)</emu-t> <emu-t>{</emu-t> <var>body</var> <emu-t>}</emu-t>.</li></ol></li><li>Else,<ol><li>Let <var>body</var> be ?&nbsp;<emu-xref aoid="LazyFunctionBodyEcmaify" id="_ref_182"><a href="#sec-lazyfunctionbodyecmaify">LazyFunctionBodyEcmaify</a></emu-xref>(<var>func</var>).</li><li>Return <emu-nt><a href="https://tc39.github.io/ecma262/#prod-FunctionExpression
+      </a></emu-nt> : <emu-t>function</emu-t> <var>maybeFuncName</var> <emu-t>(</emu-t> <var>params</var> <emu-t>)</emu-t> <emu-t>{</emu-t> <var>body</var> <emu-t>}</emu-t>.
     </li></ol></li></ol></emu-alg>
   </emu-clause>
 
