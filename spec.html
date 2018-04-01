@@ -2686,6 +2686,20 @@ interface VariableDeclarator : Node {
       </emu-alg>
     </emu-clause>
 
+    <emu-clause id="sec-checkshadowedcaptures" aoid="CheckShadowedCaptures">
+      <h1>CheckShadowedCaptures ( _scope_, _declaredNames_, _funcBody_ )</h1>
+      <emu-alg>
+        1. For each OutstandingAssertedScope Record _outstandingAssert_ in GlobalOutstandingAssertedScopes, do
+            1. If _outstandingAssert_.[[InnerFunctions]] contains _funcBody_, then
+                1. NOTE: A scope may not shadow a captured name with a non-captured name, as in source text.
+                1. For each _dn_ in _declaredNames_, do
+                    1. If _scope_`.capturedNames` does not contain _dn_ and _outstandingAssert_.[[CapturedNames]] contains _dn_, then throw a *SyntaxError* exception.
+                1. NOTE: Functions may only capture the nearest enclosing name, as in source text.
+                1. For each _cn_ in _scope_`.capturedNames`, do
+                    1. If _outstandingAssert_.[[CapturedNames]] contains _cn_, then remove _funcBody_ from _outstandingAssert_.[[InnerFunctions]].
+      </emu-alg>
+    </emu-clause>
+
     <emu-clause id="sec-checkassertedscope" aoid="CheckAssertedScope">
       <h1>CheckAssertedScope ( _scope_ , _parseTree_ )</h1>
       <emu-alg>
@@ -2700,7 +2714,7 @@ interface VariableDeclarator : Node {
         1. Else,
             1. Append the elements of _scope_`.parameterNames` to _declaredNames_.
         1. NOTE: All captured names must be asserted bindings in the scope.
-        1. For each String _cn_ in _scope_`.capturedNames`, do
+        1. For each _cn_ in _scope_`.capturedNames`, do
             1. If _cn_ is not in _declaredNames_, then throw then a *SyntaxError* exception.
         1. NOTE: All asserted declared names must be declared.
         1. If _scope_ is an `AssertedBlockScope` or an `AssertedVarScope`, then
@@ -2717,12 +2731,13 @@ interface VariableDeclarator : Node {
         1. Let _innerFunctions_ be a new empty List.
         1. For each |FunctionBody| _fb_ contained in _parseTree_, do
             1. Add _fb_ as the last element of _innerFunctions_.
+            1. Perform ? CheckShadowedCaptures(_scope_, _declaredNames_, _fb_).
         1. Let _outstandingAssert_ be a new OutstandingAssertedScope Record {[[CapturedName]]: _outstandingCapturedNames_, [[HasDirectEval]]: `"satisfied"`, [[InnerFunctions]]: _innerFunctions_}.
         1. Let _containsDirectEval_ be *true* if _parseTree_ contains a direct eval, *false* otherwise.
         1. If it is not the case both _containsDirectEval_ and _scope_`.hasDirectEval` are *true*, then
             1. Set _outstandingAssert_.[[HasDirectEval]] to _scope_`.hasDirectEval`.
             1. Perform ? AddGlobalOutstandingAssertedScope(_outstandingAssert_).
-        1. If _scope_`.capturedNames` has length great than 0, then
+        1. If _scope_`.capturedNames` has length greater than 0, then
             1. Perform ? AddGlobalOutstandingAssertedScope(_outstandingAssert_).
       </emu-alg>
     </emu-clause>
