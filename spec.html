@@ -609,6 +609,7 @@ interface ConditionalExpression : Node {
 interface FunctionExpression : Node {
   attribute boolean isAsync;
   attribute boolean isGenerator;
+  attribute boolean? isNameCaptured;
   attribute AssertedParameterScope? parameterScope;
   attribute AssertedVarScope? bodyScope;
   attribute BindingIdentifier? name;
@@ -2728,6 +2729,8 @@ interface VariableDeclarator : Node {
             1. Perform ? CheckDeclaredNames(_scope_`.parameterNames`, _paramNames_).
         1. NOTE: Presence of direct eval and veracity of captured names cannot be fully checked until inner functions are evaluated.
         1. Let _outstandingCapturedNames_ be a new empty List.
+        1. For each _cn_ in _scope_`.capturedNames`, do
+            1. Add _cn_ as the last element of _outstandingCapturedNames_.
         1. Let _innerFunctions_ be a new empty List.
         1. For each |FunctionBody| _fb_ contained in _parseTree_, do
             1. Add _fb_ as the last element of _innerFunctions_.
