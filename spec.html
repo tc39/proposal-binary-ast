@@ -1508,7 +1508,7 @@ interface VariableDeclarator : Node {
           1. Let _dirStmts_ be _s_`.directives` concatenated with _s_`.statements`.
           1. Let _stmts_ be ? StatementListEcmaify(_dirStmts_).
           1. Set _script_ to |Script| : _stmts_.
-      1. Perform ? CheckAssertedScope(_s_`.scope`, _script_).
+      1. Perform ? CheckAssertedScope(_s_`.scope`, _script_, *null*).
       1. Return _script_.
     </emu-alg>
   </emu-clause>
@@ -1585,7 +1585,7 @@ interface VariableDeclarator : Node {
       1. Assert: _b_ is a `Block`.
       1. Let _stmts_ be ? StatementListEcmaify(_b_`.statements`).
       1. Let _block_ be |Block| : <emu-t>{</emu-t> _stmts_ <emu-t>}</emu-t>.
-      1. Perform ? CheckAssertedScope(_b_`.scope`, _block_).
+      1. Perform ? CheckAssertedScope(_b_`.scope`, _block_, *null*).
       1. Return _block_.
     </emu-alg>
   </emu-clause>
@@ -2702,7 +2702,7 @@ interface VariableDeclarator : Node {
     </emu-clause>
 
     <emu-clause id="sec-checkassertedscope" aoid="CheckAssertedScope">
-      <h1>CheckAssertedScope ( _scope_ , _parseTree_ )</h1>
+      <h1>CheckAssertedScope ( _scope_ , _parseTree_ , _capturedFunExprName_)</h1>
       <emu-alg>
         1. Assert: _scope_ is an `AssertedBlockScope?` or an `AssertedVarScope?` or an `AssertedParameterScope?`.
         1. Assert: _parseTree_ is a non-empty Parse Node.
@@ -2729,6 +2729,7 @@ interface VariableDeclarator : Node {
             1. Perform ? CheckDeclaredNames(_scope_`.parameterNames`, _paramNames_).
         1. NOTE: Presence of direct eval and veracity of captured names cannot be fully checked until inner functions are evaluated.
         1. Let _outstandingCapturedNames_ be a new empty List.
+        1. If _capturedFunExprName_ is not *null*, then add _capturedFunExprName_ as the last element of _outstandingCapturedNames_.
         1. For each _cn_ in _scope_`.capturedNames`, do
             1. Add _cn_ as the last element of _outstandingCapturedNames_.
         1. Let _innerFunctions_ be a new empty List.
@@ -2992,8 +2993,11 @@ interface VariableDeclarator : Node {
           1. Let _delazifiedBody_ be ? EcmaifyFunctionBody(_funcNode_`.body`).
           1. Perform ? ValidateAndUpdateFunctionObject(_funcNode_, _functionObject_, _delazifiedBody_, _delazifiedParams_).
           1. If _funcNode_ is not a `Getter`, then
-              1. Perform ? CheckAssertedScope(_funcNode_`.parameterScope`, _delazifiedParams_).
-          1. Perform ? CheckAssertedScope(_funcNode_`.bodyScope`, _delazifiedBody_).
+              1. Perform ? CheckAssertedScope(_funcNode_`.parameterScope`, _delazifiedParams_, *null*).
+          1. Let _capturedFunExprName_ be *null*.
+          1. If _funcNode_ is a `FunctionExpression`, _funcNode_`.name` is not *null*, and _funcNode_`.isNameCaptured` is *true*, then
+              1. Set _capturedFunExprName_ to _funcNode_`.name.name`.
+          1. Perform ? CheckAssertedScope(_funcNode_`.bodyScope`, _delazifiedBody_, _capturedFunExprName_).
           1. Perform ? DischargeOutstandingAssertedScopes(_delazifiedBody_).
           1. Return |FunctionBody| : _delazifiedBody_.
       1. Else return |FunctionBody|.
