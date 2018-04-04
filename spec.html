@@ -831,6 +831,7 @@ interface Block : Node {
 
 // `Catch`
 interface CatchClause : Node {
+  attribute AssertedParameterScope? bindingScope;
   attribute Binding binding;
   attribute Block body;
 };
@@ -2489,7 +2490,9 @@ interface VariableDeclarator : Node {
       1. Assert: _catchClause_ is a `CatchClause`.
       1. Let _binding_ be ? Ecmaify(_catchClause_`.binding`).
       1. Let _body_ be ? Ecmaify(_catchClause_`.body`).
-      1. Return |Catch| : <emu-t>catch</emu-t> <emu-t>(</emu-t> _binding_ <emu-t>)</emu-t> _body_.
+      1. Let _catch_ be |Catch| : <emu-t>catch</emu-t> <emu-t>(</emu-t> _binding_ <emu-t>)</emu-t> _body_.
+      1. Perform ? CheckAssertedScope(_catchClause_`.bindingScope`, _catch_, *null*).
+      1. Return _catch_.
     </emu-alg>
   </emu-clause>
 
