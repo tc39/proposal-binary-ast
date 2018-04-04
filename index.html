@@ -827,6 +827,8 @@
 
 <span class="hljs-comment">// `Catch`</span>
 <span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">CatchClause</span> : <span class="hljs-title">Node</span> {</span>
+  <span class="hljs-comment">// `AssertedParameterScope` is used for catch bindings so the declared names</span>
+  <span class="hljs-comment">// are checked using BoundNames.</span>
   <span class="hljs-keyword">attribute</span> AssertedParameterScope? bindingScope;
   <span class="hljs-keyword">attribute</span> Binding binding;
   <span class="hljs-keyword">attribute</span> Block body;
