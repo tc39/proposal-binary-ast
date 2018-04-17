@@ -105,29 +105,20 @@ enum UpdateOperator {
 // deferred assertions
 
 interface AssertedBlockScope {
-  // checked eagerly during transformation
   attribute FrozenArray&lt;IdentifierName&gt; lexicallyDeclaredNames;
-
-  // checked lazily as inner functions are invoked
   attribute FrozenArray&lt;IdentifierName&gt; capturedNames;
   attribute boolean hasDirectEval;
 };
 
 interface AssertedVarScope {
-  // checked eagerly during transformation
   attribute FrozenArray&lt;IdentifierName&gt; lexicallyDeclaredNames;
   attribute FrozenArray&lt;IdentifierName&gt; varDeclaredNames;
-
-  // checked lazily as inner functions are invoked
   attribute FrozenArray&lt;IdentifierName&gt; capturedNames;
   attribute boolean hasDirectEval;
 };
 
 interface AssertedParameterScope {
-  // checked eagerly during transformation
   attribute FrozenArray&lt;IdentifierName&gt; parameterNames;
-
-  // checked lazily as inner functions are invoked
   attribute FrozenArray&lt;IdentifierName&gt; capturedNames;
   attribute boolean hasDirectEval;
 };
@@ -910,8 +901,9 @@ interface VariableDeclarator : Node {
 <emu-clause id="binast-transformation">
   <h1>Transformation of AST to Parse Tree</h1>
   <p>The Ecmaify abstract operation transforms binary AST Nodes to ECMAScript Parse Nodes. It performs additional early error checking on top of existing ECMAScript early error semantics.</p>
-  <p>A Parse Node may be <dfn>tag</dfn>ged as being transformed by a binary AST Node. The original binary AST Node is retrievable from tagged Parse Nodes.</p>
+  <p>A Parse Node may be <dfn>tag</dfn>ged as being transformed by a binary AST Node with an optional asserted scope. The original binary AST Node and the optional asserted scope are retrievable from tagged Parse Nodes.</p>
   <emu-note>Tagging Parse Nodes is used to introduce laziness at function body boundaries.</emu-note>
+  <p>The <dfn id="currentassertedscope">current asserted scope</dfn> is used to track asserted scopes during transformation of binary AST Nodes.
   <p>The naming convention of the Ecmaify abstract operations is:</p>
   <ul>
     <li>FooEcmaify always returns a Parse Node of the ECMAScript grammar production |Foo|.</li>
@@ -1362,7 +1354,8 @@ interface VariableDeclarator : Node {
       1. TODO: The `length` property Function instances need delazifying.
       1. Assert: _params_ is a `FormalParameters`.
       1. Let _emptyParams_ be |FormalParameters| : [empty].
-      1. Tag _emptyParams_ as being produced by _params_.
+      1. Let _currentScope_ be the current asserted scope.
+      1. Tag _emptyParams_ as being produced by _params_ in scope _currentScope_.
       1. Return _emptyParams_.
     </emu-alg>
   </emu-clause>
@@ -1375,7 +1368,8 @@ interface VariableDeclarator : Node {
       1. Assert: _params_ is a `FormalParameters`.
       1. Let _emptyArrowParams0_ be a |CoverParenthesizedExpressionAndArrowParameterList| : <emu-t>(</emu-t> <emu-t>)</emu-t>.
       1. Let _emptyArrowParams_ be |ArrowParameters| : _emptyArrowParams0_.
-      1. Tag _emptyArrowParams_ as being produced by _params_.
+      1. Let _currentScope_ be the current asserted scope.
+      1. Tag _emptyArrowParams_ as being produced by _params_ in scope _currentScope_.
       1. Return _emptyArrowParams_.
     </emu-alg>
   </emu-clause>
@@ -1390,7 +1384,8 @@ interface VariableDeclarator : Node {
       1. Let _placeholder_ be |Identifier| : <emu-t>_</emu-t>.
       1. Let _emptyPropSetParam0_ be |FormalParameter| : _placeholder_.
       1. Let _emptyPropSetParam_ be |PropertySetParameterList| : _emptyPropSetParam0_.
-      1. Tag _emptyPropSetParam_ as being produced by _param_.
+      1. Let _currentScope_ be the current asserted scope.
+      1. Tag _emptyPropSetParam_ as being produced by _param_ in scope _currentScope_.
       1. Return _emptyPropSetParam_.
     </emu-alg>
   </emu-clause>
@@ -1403,7 +1398,8 @@ interface VariableDeclarator : Node {
       1. Let _stmts_ be |StatementList| : _emptyStmt_.
       1. Let _funcStmts_ be |FunctionStatementList| : _stmts_.
       1. Let _body_ be |FunctionBody| : _funcStmts_.
-      1. Tag _body_ as being produced by _parent_.
+      1. Let _currentScope_ be the current asserted scope.
+      1. Tag _body_ as being produced by _parent_ in scope _currentScope_.
       1. Return _body_.
     </emu-alg>
   </emu-clause>
@@ -1503,6 +1499,9 @@ interface VariableDeclarator : Node {
       1. NOTE: This is called when a binary AST corresponding to a script is evaluated via BinaryASTScriptEvaluationJob.
       1. Assert: _s_ is a `Script`.
       1. If HasMalformedDirectives(_s_`.directives`, _s_`.statements`) is *true*, throw a *SyntaxError* exception.
+      1. Let _enclosingScope_ be the current asserted scope.
+      1. Set the current asserted scope to _s_`.scope`.
+      1. Perform AddAssertedScopeTreeNode(_s_`.scope`, _enclosingScope_).
       1. Let _dirsStmts_ be _s_`.directives` prepended to _s_`.statements`.
       1. Let _script_ be an empty Parse Node.
       1. If _s_`.directives` has length 0 and _s_`.statements` has length 0, then
@@ -1511,7 +1510,8 @@ interface VariableDeclarator : Node {
           1. Let _dirStmts_ be _s_`.directives` concatenated with _s_`.statements`.
           1. Let _stmts_ be ? StatementListEcmaify(_dirStmts_).
           1. Set _script_ to |Script| : _stmts_.
-      1. Perform ? CheckAssertedScope(_s_`.scope`, _script_, *null*).
+      1. Perform ? CheckAssertedScope(_s_`.scope`, _script_).
+      1. Set the current asserted scope to _enclosingScope_.
       1. Return _script_.
     </emu-alg>
   </emu-clause>
@@ -1586,9 +1586,13 @@ interface VariableDeclarator : Node {
     <h1>EcmaifyBlock ( _b_ )</h1>
     <emu-alg>
       1. Assert: _b_ is a `Block`.
+      1. Let _enclosingScope_ be the current asserted scope.
+      1. Set the current asserted scope to _b_`.scope`.
+      1. Perform AddAssertedScopeTreeNode(_b_`.scope`, _enclosingScope_).
       1. Let _stmts_ be ? StatementListEcmaify(_b_`.statements`).
       1. Let _block_ be |Block| : <emu-t>{</emu-t> _stmts_ <emu-t>}</emu-t>.
-      1. Perform ? CheckAssertedScope(_b_`.scope`, _block_, *null*).
+      1. Perform ? CheckAssertedScope(_b_`.scope`, _block_).
+      1. Set the current asserted scope to _enclosingScope_.
       1. Return _block_.
     </emu-alg>
   </emu-clause>
@@ -2490,10 +2494,14 @@ interface VariableDeclarator : Node {
     <h1>EcmaifyCatchClause ( _catchClause_ )</h1>
     <emu-alg>
       1. Assert: _catchClause_ is a `CatchClause`.
+      1. Let _enclosingScope_ be the current asserted scope.
+      1. Set the current asserted scope to _catchClause_`.bindingScope`.
+      1. Perform AddAssertedScopeTreeNode(_catchClause_`.bindingScope`, _enclosingScope_).
       1. Let _binding_ be ? Ecmaify(_catchClause_`.binding`).
       1. Let _body_ be ? Ecmaify(_catchClause_`.body`).
       1. Let _catch_ be |Catch| : <emu-t>catch</emu-t> <emu-t>(</emu-t> _binding_ <emu-t>)</emu-t> _body_.
-      1. Perform ? CheckAssertedScope(_catchClause_`.bindingScope`, _catch_, *null*).
+      1. Perform ? CheckAssertedScope(_catchClause_`.bindingScope`, _catch_).
+      1. Set the current asserted scope to _enclosingScope_.
       1. Return _catch_.
     </emu-alg>
   </emu-clause>
@@ -2609,19 +2617,17 @@ interface VariableDeclarator : Node {
   <ol>
     <li>Transformation of binary ASTs to parse trees may throw exceptions in the same phase as early errors.</li>
     <li>Evaluation of a binary AST is inherently lazy at the function boundaries. A function's |FunctionBody| is not transformed until it is invoked. This means Static Semantics which would have been observable (i.e. by throwing exceptions) at parse time of functions evaluated via source text is deferred until invocation if the function is evaluated via binary AST.</li>
-    <li>`AssertedScope` contains assertions to be checked during transformation of the current AST or future, nested ASTs. For the latter, <dfn id="outstandingassertedscope-record">OutstandingAssertedScope Record</dfn>s are tracked on the current execution context.</li>
   </ol>
 
   <emu-clause id="sec-assertions">
     <h1>Assertions</h1>
-    <p>Evaluation of binary AST is inherently lazy at function boundaries. Together with `AssertedScope`, the intent is to allow implementations to start execution or code generation without parsing the entire tree. `AssertedScope` represent assertions that must be checked. A failing assertion throws a *SyntaxError* exception.</p>
-    <p>There are two kinds of assertions in `AssertedScope`: those that eagerly checked during the transformation of the current tree, and those that are checked lazily as inner functions are transformed in the future.</p>
-    <p>Checking lazy assertions is done via a List of OutstandingAssertedScope Records on the execution context. After finishing transformation of a `Script`, `Module`, `FunctionBody`, and `Block`, its `AssertedScope`'s eager assertions are checked. `AssertedScope`s that have outstanding lazy assertions at the end of transformation, along with any inner lazy functions in its scope, are packaged in an OutstandingAssertedScope Record and appended to the current execution context. When an inner function is transformed, any outstanding assertions are checked. If assertions remains, any new inner functions seen during the transformation are appended to the OutstandingAssertedScope Record. If all assertions have been satisfied, the OutstandingAssertedScope Record is removed from the execution context. If there are unsatisfied assertions after all inner functions have been transformed, a *SyntaxError* is thrown.</p>
-    <emu-note>While `AssertedScope`s are optional, an implementation is prohibited from binding optimizations if they are absent.</emu-note>
+    <p>Evaluation of binary AST is possibly lazy at function boundaries. Together with `AssertedScope`, the intent is to allow implementations to start to start code generation without parsing the entire tree. `AssertedScope` represent assertions that must be checked. A failing assertion throws a *SyntaxError* exception.</p>
+    <p>Asserted declared names must match exactly the set of actual declared names exactly in the scope. The asserted captured names in the scope must be a superset of observed captured names. If the presence of direct eval is asserted to be *false*, then a direct eval must not be observed in the scope. If the presence of direct eval is asserted to be *true*, a direct eval is allowed to not be observed (i.e. it is conservative).</p>
+    <emu-note>While asserte scopes are optional, an implementation is prohibited from binding optimizations if they are absent.</emu-note>
 
-    <p>The <dfn id="globaloutstandingassertedscopes">GlobalOutstandingAssertedScopes<dfn> is a List that is globally available. It is shared by all realms. Prior to the evaluation of any ECMAScript code it is initialized as a new empty List. Elements of the GlobalOutstandingAssertedScopes are Records with the structured defined in <emu-xref href="#table-outstandingassertedscoperecord" title></emu-xref>.</p>
+    <p>The <dfn id="globalassertedscopetree">GlobalAssertedScopeTree</dfn> is a List that is globally available. It is shared by all realms. Prior to the evaluation of any ECMAScript code it is initialized as a new empty List. Elements of the GlobalAssertedScopeTree are Records with the structure defined in <emu-xref href="#table-assertedscopetreenode" title></emu-xref>.</p>
 
-    <emu-table id="table-outstandingassertedscoperecord" caption="OutstandingAssertedScope Record Fields">
+    <emu-table id="table-assertedscopetreenode" caption="AssertedScopeTreeNode Record Fields">
       <table>
         <tbody>
         <tr>
@@ -2637,48 +2643,53 @@ interface VariableDeclarator : Node {
         </tr>
         <tr>
           <td>
-            [[CapturedNames]]
+            [[AssertedScope]]
           </td>
           <td>
-            A List
+            An `AssertedBlockScope`, `AssertedVarScope`, or `AssertedParameterScope`
           </td>
           <td>
-            The names that are asserted to be statically captured (i.e. not via direct eval or the *Function* constructor) but have not yet been observed to be captured.
-          </td>
-        </tr>
-        <tr>
-          <td>
-            [[HasDirectEval]]
-          </td>
-          <td>
-            A Boolean or a String
-          </td>
-          <td>
-             *true* means the scope is expected to contain a direct eval, but one has not yet been observed. *false* means the scope is expected to not contain a direct eval, but [[InnerFunctions]] is non-empty. `"satisfied"` means the assertion has been satisfied.
+            The payload.
           </td>
         </tr>
         <tr>
           <td>
-            [[InnerFunctions]]
+            [[Enclosing]]
           </td>
           <td>
-            A List
+            An AssertedScopeTreeNode Record or *null*
           </td>
           <td>
-            The |FunctionBody| parse nodes of inner functions that have not yet been checked for assertions.
+            The directly enclosing scope.
           </td>
         </tr>
         </tbody>
       </table>
     </emu-table>
 
-    <emu-clause id="sec-addglobaloutstandingassertedscope" aoid="AddGlobalOutstandingAssertedScope">
-      <h1>AddGlobalOutstandingAssertedScope ( _outstandingAssert_ )</h1>
+    <emu-clause id="sec-findassertedscopetreenode" aoid="FindAssertedScopeTreeNode">
+      <h1>FindAssertedScopeTreeNode ( _scope_ )</h1>
       <emu-alg>
-        1. Assert: _outstandingAssert_.[[HasDirectEval]] is not `"satisfied"` or _outstandingAssert_.[[CapturedNames]] is a non-empty List.
-        1. If _outstandingAssert_.[[InnerFunctions]] is an empty List, throw a *SyntaxError* exception.
-        1. If _outstandingAssert_ is not in GlobalOutstandingAssertedScopes, then
-            1. Add _outstandingAssert_ as the last element of GlobalOutstandingAssertedScopes.
+        1. Assert: _scope_ is not *null*.
+        1. For each _node_ in GlobalAssertedScopeTree, do
+            1. If _node_.[[AssertedScope]] has the same identity as _scope_, then return _node_.
+        1. Return *null*.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-addassertedscopetreenode" aoid="AddAssertedScopeTreeNode">
+      <h1>AddAssertedScopeTreeNode ( _scope_, _enclosing_ )</h1>
+      <emu-alg>
+        1. Let _found_ be FindAssertedScopeTreeNode(_scope_).
+        1. If _found_ is not *null*, then
+            1. If _enclosing_ is *null*, then
+                1. Assert: _found_.[[Enclosing]] is *null*.
+            1. Else,
+                1. Let _enclosingNode_ be FindAssertedScopeTreeNode(_enclosing_).
+                1. Assert: _found_.[[Enclosing]] has the same identity as _enclosingNode_.
+        1. Else,
+            1. Let _node_ be a new AssertedScopeTreeNode Record {[[AssertedScope]]: _scope_, [[Enclosing]]: _enclosingNode_}.
+            1. Add _node_ as the last element of GlobalAssertedScopeTree.
       </emu-alg>
     </emu-clause>
 
@@ -2692,26 +2703,10 @@ interface VariableDeclarator : Node {
       </emu-alg>
     </emu-clause>
 
-    <emu-clause id="sec-checkshadowedcaptures" aoid="CheckShadowedCaptures">
-      <h1>CheckShadowedCaptures ( _scope_, _declaredNames_, _funcBody_ )</h1>
+    <emu-clause id="sec-alldeclarednames" aoid="AllDeclaredNames">
+      <h1>AllDeclaredNames ( _scope_ )</h1>
       <emu-alg>
-        1. For each OutstandingAssertedScope Record _outstandingAssert_ in GlobalOutstandingAssertedScopes, do
-            1. If _outstandingAssert_.[[InnerFunctions]] contains _funcBody_, then
-                1. NOTE: A scope may not shadow a captured name with a non-captured name, as in source text.
-                1. For each _dn_ in _declaredNames_, do
-                    1. If _scope_`.capturedNames` does not contain _dn_ and _outstandingAssert_.[[CapturedNames]] contains _dn_, then throw a *SyntaxError* exception.
-                1. NOTE: Functions may only capture the nearest enclosing name, as in source text.
-                1. For each _cn_ in _scope_`.capturedNames`, do
-                    1. If _outstandingAssert_.[[CapturedNames]] contains _cn_, then remove _funcBody_ from _outstandingAssert_.[[InnerFunctions]].
-      </emu-alg>
-    </emu-clause>
-
-    <emu-clause id="sec-checkassertedscope" aoid="CheckAssertedScope">
-      <h1>CheckAssertedScope ( _scope_ , _parseTree_ , _capturedFunExprName_)</h1>
-      <emu-alg>
-        1. Assert: _scope_ is an `AssertedBlockScope?` or an `AssertedVarScope?` or an `AssertedParameterScope?`.
-        1. Assert: _parseTree_ is a non-empty Parse Node.
-        1. If _scope_ is *null*, return.
+        1. Assert: _scope_ is not *null*.
         1. Let _declaredNames_ be a new empty List.
         1. If _scope_ is an `AssertedBlockScope` or an `AssertedVarScope`, then
             1. If _scope_ is an `AssertedVarScope`, then
@@ -2719,9 +2714,20 @@ interface VariableDeclarator : Node {
             1. Append the elements of _scope_`.lexicallyDeclaredNames` to _declaredNames_.
         1. Else,
             1. Append the elements of _scope_`.parameterNames` to _declaredNames_.
+        1. Return _declaredNames_.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-checkassertedscope" aoid="CheckAssertedScope">
+      <h1>CheckAssertedScope ( _scope_ , _parseTree_ )</h1>
+      <emu-alg>
+        1. Assert: _scope_ is an `AssertedBlockScope?` or an `AssertedVarScope?` or an `AssertedParameterScope?`.
+        1. Assert: _parseTree_ is a non-empty Parse Node.
+        1. If _scope_ is *null*, return.
+        1. Let _declaredNames_ be AllDeclaredNames(_scope_).
         1. NOTE: All captured names must be asserted bindings in the scope.
         1. For each _cn_ in _scope_`.capturedNames`, do
-            1. If _cn_ is not in _declaredNames_, then throw then a *SyntaxError* exception.
+            1. If _cn_ is not in _declaredNames_, then throw a *SyntaxError* exception.
         1. NOTE: All asserted declared names must be declared.
         1. If _scope_ is an `AssertedBlockScope` or an `AssertedVarScope`, then
             1. If _scope_ is an `AssertedVarScope`, then
@@ -2732,53 +2738,28 @@ interface VariableDeclarator : Node {
         1. Else,
             1. Let _paramNames_ be the BoundNames of _parseTree_.
             1. Perform ? CheckDeclaredNames(_scope_`.parameterNames`, _paramNames_).
-        1. NOTE: Presence of direct eval and veracity of captured names cannot be fully checked until inner functions are evaluated.
-        1. Let _outstandingCapturedNames_ be a new empty List.
-        1. If _capturedFunExprName_ is not *null*, then add _capturedFunExprName_ as the last element of _outstandingCapturedNames_.
-        1. For each _cn_ in _scope_`.capturedNames`, do
-            1. Add _cn_ as the last element of _outstandingCapturedNames_.
-        1. Let _innerFunctions_ be a new empty List.
-        1. For each |FunctionBody| _fb_ contained in _parseTree_, do
-            1. Add _fb_ as the last element of _innerFunctions_.
-            1. Perform ? CheckShadowedCaptures(_scope_, _declaredNames_, _fb_).
-        1. Let _outstandingAssert_ be a new OutstandingAssertedScope Record {[[CapturedName]]: _outstandingCapturedNames_, [[HasDirectEval]]: `"satisfied"`, [[InnerFunctions]]: _innerFunctions_}.
-        1. Let _containsDirectEval_ be *true* if _parseTree_ contains a direct eval, *false* otherwise.
-        1. If it is not the case both _containsDirectEval_ and _scope_`.hasDirectEval` are *true*, then
-            1. Set _outstandingAssert_.[[HasDirectEval]] to _scope_`.hasDirectEval`.
-            1. Perform ? AddGlobalOutstandingAssertedScope(_outstandingAssert_).
-        1. If _scope_`.capturedNames` has length greater than 0, then
-            1. Perform ? AddGlobalOutstandingAssertedScope(_outstandingAssert_).
-      </emu-alg>
-    </emu-clause>
-
-    <emu-clause id="sec-dischargeoutstandingassertedscopes" aoid="DischargeOutstandingAssertedScopes">
-      <h1>DischargeOutstandingAssertedScopes ( _funcBody_ )</h1>
-      <emu-alg>
-        1. Assert: _funcBody_ is a |FunctionBody|.
-        1. Let _innerFunctions_ be a new empty list.
-        1. For each |FunctionBody| _fb_ contained in _funcBody_, do
-            1. Add _fb_ as the last element of _innerFunctions_.
-        1. Let _freeNames_ be the FreeNames of _funcBody_.
-        1. For each OutstandingAssertedScope Record _outstandingAssert_ in GlobalOutstandingAssertedScopes, do
-            1. If _outstandingAssert_.[[InnerFunctions]] contains _funcBody_, then
-                1. Remove _funcBody_ from _outstandingAssert_.[[InnerFunctions]].
-                1. Let _allSatisfied_ be *true*.
-                1. For each _fn_ in _freeNames_, do
-                    1. Remove _fn_, if present, from _outstandingAssert_.[[CapturedNames]].
-                1. If _outstandingAssert_.[[CapturedNames]] not an empty List, then
-                    1. Set _allSatisfied_ to *false*.
-                1. If _outstandingAssert_.[[HasDirectEval]] is not `"satisfied"`, then
-                    1. Let _containsDirectEval_ be *true* if _funcBody_ contains a direct eval, *false* otherwise.
-                    1. If both _containsDirectEval_ and _scope_`.hasDirectEval` are *true*, then
-                        1. Set _outstandingAssert_.[[HasDirectEval]] to `"satisfied"`.
-                    1. Else,
-                        1. Set _allSatisfied_ to *false*.
-                1. If _allSatisfied_ is *true*, then
-                    1. Remove _outstandingAssert_ from GlobalOutstandingAssertedScopes.
-                1. Else,
-                    1. Remove _funcBody_ from _outstandingAssert_.[[InnerFunctions]].
-                    1. Append _innerFunctions_ to the elements of _outstandingAssert_.[[InnerFunctions]].
-                    1. If _outstandingAssert_.[[InnerFunctions]] is an empty List, throw a *SyntaxError* exception.
+        1. NOTE: All free names must have been asserted both declared and captured in an enclosing scope. Non-captured declared names cannot shadow a captured declared name, as in source text. It is permitted to assert a declared name as captured even if it is never observed to be captured.
+        1. Let _freeNames_ be the FreeNames of _parseTree_.
+        1. For each _fn_ in _freeNames_, do
+            1. Let _scopeNode_ be FindAssertedScopeTreeNode(_scope_).
+            1. Let _foundAssertedCapture_ be *false*.
+            1. Repeat, while _scopeNode_.[[Enclosing]] is not *null* and _foundAssertedCapture_ is *false*,
+                1. Let _enclosingScope_ be _scopeNode_.[[Enclosing]].[[AssertedScope]].
+                1. Let _enclosingDeclaredNames_ be AllDeclaredNames(_enclosingScope_).
+                1. If _fn_ is in _enclosingDeclaredNames_, then
+                    1. If _fn_ is in _enclosingScope_`.capturedNames`, then set _foundAssertedCapture_ to *true*.
+                    1. Else throw a *SyntaxError* exception.
+                1. Else set _scopeNode_ to _scopeNode_.[[Enclosing]].
+            1. If _foundAssertedCapture_ is *false*, then throw a *SyntaxError* exception.
+        1. NOTE: The presence of a direct eval must have been asserted in an enclosing scope. It is permitted to assert having a direct eval even if a direct eval is never observed in scope.
+        1. If _parseTree_ contains a direct eval, then
+            1. Let _scopeNode_ be FindAssertedScopeTreeNode(_scope_).
+            1. Let _foundAssertedDirectEval_ to be *false*.
+            1. Repeat, while _scopeNode_ is not *null*,
+                1. If _scopeNode_.[[AssertedScope]]`.hasDirectEval` is *true*, then set _foundAssertedDirectEval_ to *true*.
+                1. Else if _foundAssertedDirectEval_ is *false*, then throw a *SyntaxError* exception.
+                1. Set _scopeNode_ to _scopeNode_.[[Enclosing]].
+            1. If _foundAssertedDirectEval_ is *false*, then throw a *SyntaxError* exception.
       </emu-alg>
     </emu-clause>
 
@@ -2915,6 +2896,7 @@ interface VariableDeclarator : Node {
     <h1>TransformASTScript ( _ast_, _realm_, _hostDefined_ )</h1>
     <p>TransformASTScript is a new abstract operation.</p>
     <emu-alg>
+      1. Assert: The current asserted scope to *null*.
       1. Let _body_ be ? EcmaifyScript(_ast_).
       1. Return Script Record {[[Realm]]: _realm_, [[Environment]]: *undefined*, [[ECMAScriptCode]]: _body_, [[HostDefined]]: _hostDefined_}.
     </emu-alg>
@@ -2993,25 +2975,36 @@ interface VariableDeclarator : Node {
 
     <emu-grammar>FunctionBody : FunctionStatementList</emu-grammar>
     <emu-alg>
-      1. If |FunctionStatementList| is a |StatementList| consisting of a single |EmptyStatement| that is tagged as being produced by _funcNode_, then
+      1. If |FunctionStatementList| is a |StatementList| consisting of a single |EmptyStatement| that is tagged as being produced by _funcNode_ in scope _scope_, then
+          1. Assert: The current asserted scope is *null*.
+          1. Set the current asserted scope to _scope_.
+          1. If _funcNode_ is a `FunctionExpression`, _funcNode_`.name` is not *null*, and _funcNode_`.isNameCaptured` is *true*, then
+              1. NOTE: Named function expressions may capture their name, which synthesizes a block scope containing only the function name enclosing the entire function expression.
+              1. Let _synthNamedLambdaScope_ be an `AssertedBlockScope`.
+              1. Set _synthNamedLambdaScope_`.lexicallyDeclaredNames` to be a new `FrozenArray&lt;IdentifierName&gt;` of length 1 containing _funcNode_`.name`.
+              1. Set _synthNamedLambdaScope_`.capturedNames` to be a new `FrozenArray&lt;IdentifierName&gt;` of length 1 containing _funcNode_`.name`.
+              1. Set _synthNamedLambdaScope_`.hasDirectEval` to _scope_`.hasDirectEval`.
+              1. Perform AddAssertedScopeTreeNode(_synthNamedLambdaScope_, _scope_).
+              1. Set _scope_ to _synthNamedLambdaScope_.
+          1. Perform AddAssertedScopeTreeNode(_s_`.parameterScope`, _scope_).
+          1. Perform AddAssertedScopeTreeNode(_s_`.bodyScope`, _s_`.parameterScope`).
           1. Let _delazifiedParams_ be the result of Delazify on the Parse Node that is _functionObject_.[[FormalParameters]] passing _functionObject_.
           1. Let _delazifiedBody_ be ? EcmaifyFunctionBody(_funcNode_`.body`).
           1. Perform ? ValidateAndUpdateFunctionObject(_funcNode_, _functionObject_, _delazifiedBody_, _delazifiedParams_).
-          1. If _funcNode_ is not a `Getter`, then
-              1. Perform ? CheckAssertedScope(_funcNode_`.parameterScope`, _delazifiedParams_, *null*).
-          1. Let _capturedFunExprName_ be *null*.
-          1. If _funcNode_ is a `FunctionExpression`, _funcNode_`.name` is not *null*, and _funcNode_`.isNameCaptured` is *true*, then
-              1. Set _capturedFunExprName_ to _funcNode_`.name.name`.
-          1. Perform ? CheckAssertedScope(_funcNode_`.bodyScope`, _delazifiedBody_, _capturedFunExprName_).
-          1. Perform ? DischargeOutstandingAssertedScopes(_delazifiedBody_).
+          1. Perform ? CheckAssertedScope(_funcNode_`.bodyScope`, _delazifiedBody_).
+          1. Set the current asserted scope to *null*.
           1. Return |FunctionBody| : _delazifiedBody_.
       1. Else return |FunctionBody|.
     </emu-alg>
 
     <emu-grammar>FormalParameters : [empty]</emu-grammar>
     <emu-alg>
-      1. If |FormalParameters| is tagged as being produced by an AST node _paramAst_, then
-          1. Return ? EcmaifyFormalParameters(_paramsAst_).
+      1. If |FormalParameters| is tagged as being produced by an AST node _paramAst_ in scope _scope_, then
+          1. Assert: The current asserted scope is *null*.
+          1. Set the current asserted scope to _scope_.
+          1. Let _params_ be ? EcmaifyFormalParameters(_paramsAst_).
+          1. Set the current asserted scope to *null*.
+          1. Return _params_.
       1. Else return |FormalParameters|.
     </emu-alg>
 
@@ -3022,15 +3015,21 @@ interface VariableDeclarator : Node {
 
     <emu-grammar>ArrowParameters : CoverParenthesizedExpressionAndArrowParameterList</emu-grammar>
     <emu-alg>
-      1. If |ArrowParameters| is tagged as being produced by an AST node _paramAst_, then
-          1. Return ? EcmaifyCoverArrowParameterList(_paramsAst_).
+      1. If |ArrowParameters| is tagged as being produced by an AST node _paramAst_ in scope _scope_, then
+          1. Set the current asserted scope to _scope_.
+          1. Let _params_ be ? EcmaifyCoverArrowParameterList(_paramsAst_).
+          1. Set the current asserted scope to *null*.
+          1. Return _params.
       1. Else return |ArrowParameters|.
     </emu-alg>
 
     <emu-grammar>PropertySetParameterList : FormalParameter</emu-grammar>
     <emu-alg>
-      1. If |PropertySetParameterList| is tagged as being produced by an AST node _paramAst_, then
-          1. Return ? EcmaifyPropertySetParameterList(_paramsAst_).
+      1. If |PropertySetParameterList| is tagged as being produced by an AST node _paramAst_ in scope _scope_, then
+          1. Set the current asserted scope to _scope_.
+          1. Let _params_ be ? EcmaifyPropertySetParameterList(_paramsAst_).
+          1. Set the current asserted scope to *null*.
+          1. Return _params_.
       1. Else return |PropertySetParameterList|.
     </emu-alg>
   </emu-clause>
