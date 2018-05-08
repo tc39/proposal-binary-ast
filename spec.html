@@ -123,6 +123,12 @@ interface AssertedParameterScope {
   attribute boolean hasDirectEval;
 };
 
+interface AssertedBoundNamesScope {
+  attribute FrozenArray&lt;IdentifierName&gt; boundNames;
+  attribute FrozenArray&lt;IdentifierName&gt; capturedNames;
+  attribute boolean hasDirectEval;
+};
+
 // nodes
 
 interface Node {
@@ -822,9 +828,7 @@ interface Block : Node {
 
 // `Catch`
 interface CatchClause : Node {
-  // `AssertedParameterScope` is used for catch bindings so the declared names
-  // are checked using BoundNames.
-  attribute AssertedParameterScope? bindingScope;
+  attribute AssertedBoundNamesScope? bindingScope;
   attribute Binding binding;
   attribute Block body;
 };
@@ -2646,7 +2650,7 @@ interface VariableDeclarator : Node {
             [[AssertedScope]]
           </td>
           <td>
-            An `AssertedBlockScope`, `AssertedVarScope`, or `AssertedParameterScope`
+            An `AssertedBlockScope`, `AssertedVarScope`, `AssertedParameterScope`, or `AssertedBoundNamesScope`
           </td>
           <td>
             The payload.
@@ -2696,10 +2700,22 @@ interface VariableDeclarator : Node {
     <emu-clause id="sec-checkdeclarednames" aoid="CheckDeclaredNames">
       <h1>CheckDeclaredNames ( _expectedDeclared_, _actualDeclared_ )</h1>
       <emu-alg>
+        1. Let _unseen_ be a copy of _expectedDeclared_.
         1. For each _dn_ in _actualDeclared_, do
-            1. If _dn_ is not in _expectedDeclared_, then throw a *SyntaxError* exception.
-            1. Remove _dn_ from _expectedDeclared_.
-        1. If _expectedDeclared_ has length greater than 0, then throw a *SyntaxError* exception.
+            1. If _dn_ is not in _unseen_, then throw a *SyntaxError* exception.
+            1. Remove _dn_ from _unseen_.
+        1. If _unseen_ has length greater than 0, then throw a *SyntaxError* exception.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-checkdeclarednames" aoid="CheckDeclaredNames">
+      <h1>CheckParameterNames ( _expectedParams_, _actualParams_ )</h1>
+      <emu-alg>
+        1. Let _idx_ be 0.
+        1. If _expectedParams_ and _actualParams_ have different lengths, then throw a *SyntaxError* exception.
+        1. For each _pn_ in _actualParams_ in List order, do
+            1. If _expectedParams_`[idx]` is not _pn_, then throw a *SyntaxError* exception.
+            1. Set _idx_ to _idx_ + 1.
       </emu-alg>
     </emu-clause>
 
@@ -2712,8 +2728,10 @@ interface VariableDeclarator : Node {
             1. If _scope_ is an `AssertedVarScope`, then
                 1. Append the elements of _scope_`.varDeclaredNames` to _declaredNames_.
             1. Append the elements of _scope_`.lexicallyDeclaredNames` to _declaredNames_.
-        1. Else,
+        1. Else if _scope_ is an `AssertedParameterScope`, then
             1. Append the elements of _scope_`.parameterNames` to _declaredNames_.
+        1. Else,
+            1. Append the elements of _scope_`.boundNames` to _declaredNames_.
         1. Return _declaredNames_.
       </emu-alg>
     </emu-clause>
@@ -2721,7 +2739,7 @@ interface VariableDeclarator : Node {
     <emu-clause id="sec-checkassertedscope" aoid="CheckAssertedScope">
       <h1>CheckAssertedScope ( _scope_ , _parseTree_ )</h1>
       <emu-alg>
-        1. Assert: _scope_ is an `AssertedBlockScope?` or an `AssertedVarScope?` or an `AssertedParameterScope?`.
+        1. Assert: _scope_ is an `AssertedBlockScope?` or an `AssertedVarScope?` or an `AssertedParameterScope?` or an `AssertedBoundNamesScope?`.
         1. Assert: _parseTree_ is a non-empty Parse Node.
         1. If _scope_ is *null*, return.
         1. Let _declaredNames_ be AllDeclaredNames(_scope_).
@@ -2735,9 +2753,13 @@ interface VariableDeclarator : Node {
                 1. Perform ? CheckDeclaredNames(_scope_`.varDeclaredNames`, _varDeclaredNames_).
             1. Let _lexDeclaredNames_ be the LexicallyDeclaredNames of _parseTree_.
             1. Perform ? CheckDeclaredNames(_scope_`.lexicallyDeclaredNames`, _lexDeclaredNames_).
-        1. Else,
+        1. Else if _scope_ is an `AssertedParameterScope`, then
+            1. NOTE: The positions as well as the names of parameters must match.
             1. Let _paramNames_ be the BoundNames of _parseTree_.
-            1. Perform ? CheckDeclaredNames(_scope_`.parameterNames`, _paramNames_).
+            1. Perform ? CheckParameterNames(_scope_`.parameterNames`, _paramNames_).
+        1. Else,
+            1. Let _boundNames_ be the BoundNames of _parseTree_.
+            1. Perform ? CheckDeclaredNames(_scope_`.boundNames`, _boundNames_).
         1. NOTE: All free names must have been asserted both declared and captured in an enclosing scope. Non-captured declared names cannot shadow a captured declared name, as in source text. It is permitted to assert a declared name as captured even if it is never observed to be captured.
         1. Let _freeNames_ be the FreeNames of _parseTree_.
         1. For each _fn_ in _freeNames_, do
@@ -2991,6 +3013,7 @@ interface VariableDeclarator : Node {
           1. Let _delazifiedParams_ be the result of Delazify on the Parse Node that is _functionObject_.[[FormalParameters]] passing _functionObject_.
           1. Let _delazifiedBody_ be ? EcmaifyFunctionBody(_funcNode_`.body`).
           1. Perform ? ValidateAndUpdateFunctionObject(_funcNode_, _functionObject_, _delazifiedBody_, _delazifiedParams_).
+          1. Perform ? CheckAssertedScope(_funcNode_`.parameterScope`, _delazifiedParams_).
           1. Perform ? CheckAssertedScope(_funcNode_`.bodyScope`, _delazifiedBody_).
           1. Set the current asserted scope to *null*.
           1. Return |FunctionBody| : _delazifiedBody_.
