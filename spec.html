@@ -26,7 +26,7 @@ contributors: Shu-yu Guo, David Teller, Ecma International
   <p>This section is derived from <a href="https://github.com/shapesecurity/shift-spec/blob/es2017/spec.idl">Shift AST Spec</a> and parts are Copyright 2014-2017 Shape Security, Inc.</p>
   <p>Unlike the Shift AST spec, interface types are not used to inherit fields to control over ordering of fields. Type hierarchies that are not used to discriminate are collapsed to make space costs simple. Nor are they used to discriminate types, for which explicitly discriminated unions types are used.</p>
   <emu-note>Whereas Shift AST's design principle is ease of search-and-replace of node types, binary AST's design principle is ease of verification and ease of associating different behaviors with syntactically different (but possibly lexically similar) productions.</emu-note>
-  <p>The grammar is presented in WebIDL with the `[TypeIndicator]` and `NonEmpty` extensions per Shift AST spec. The `typedefs` of `or` types are to be read as recursive sum types. In text below, the "is a `Foo`" prose is shorthand for checking the node's `type` attribute being equal to `"Foo"`.</p>
+  <p>The grammar is presented in WebIDL with the `[TypeIndicator]` and `[NonEmpty]` extensions per Shift AST spec. The `typedefs` of `or` types are to be read as recursive sum types. In text below, the "is a `Foo`" prose is shorthand for checking the node's `type` attribute being equal to `"Foo"`.</p>
 
   <pre><code class="language-webidl">
 // Type aliases and enums.
@@ -445,29 +445,20 @@ interface Method : Node {
   attribute boolean isAsync;
   // True for `GeneratorMethod`, false otherwise.
   attribute boolean isGenerator;
-  attribute AssertedParameterScope? parameterScope;
-  attribute AssertedVarScope? bodyScope;
   attribute PropertyName name;
-  // The `UniqueFormalParameters`.
-  attribute FormalParameters params;
-  attribute FunctionBody body;
+  attribute SkippableParametersAndFunctionBody skippableBody;
 };
 
 // `get PropertyName ( ) { FunctionBody }`
 interface Getter : Node {
-  attribute AssertedVarScope? bodyScope;
   attribute PropertyName name;
-  attribute FunctionBody body;
+  attribute SkippableFunctionBody skippableBody;
 };
 
 // `set PropertyName ( PropertySetParameterList ) { FunctionBody }`
 interface Setter : Node {
-  attribute AssertedParameterScope? parameterScope;
-  attribute AssertedVarScope? bodyScope;
   attribute PropertyName name;
-  // The `PropertySetParameterList`.
-  attribute Parameter param;
-  attribute FunctionBody body;
+  attribute SkippableSingleParameterAndFunctionBody skippableBody;
 };
 
 // `PropertyDefinition :: PropertyName : AssignmentExpression`
@@ -536,10 +527,7 @@ interface ArrayExpression : Node {
 interface ArrowExpression : Node {
   // True for `AsyncArrowFunction`, false otherwise.
   attribute boolean isAsync;
-  attribute AssertedParameterScope? parameterScope;
-  attribute AssertedVarScope? bodyScope;
-  attribute FormalParameters params;
-  attribute (FunctionBody or Expression) body;
+  attribute SkippableParametersAndArrowBody skippableBody;
 };
 
 // `AssignmentExpression :: LeftHandSideExpression = AssignmentExpression`
@@ -606,12 +594,8 @@ interface ConditionalExpression : Node {
 interface FunctionExpression : Node {
   attribute boolean isAsync;
   attribute boolean isGenerator;
-  attribute boolean? isNameCaptured;
-  attribute AssertedParameterScope? parameterScope;
-  attribute AssertedVarScope? bodyScope;
   attribute BindingIdentifier? name;
-  attribute FormalParameters params;
-  attribute FunctionBody body;
+  attribute SkippableParametersAndFunctionExpressionBody skippableBody;
 };
 
 // `IdentifierReference`
@@ -848,17 +832,53 @@ interface FunctionBody : Node {
   attribute FrozenArray&lt;Statement&gt; statements;
 };
 
+interface SkippableFunctionBody : Node {
+  attribute boolean skip;
+  attribute AssertedVarScope? bodyScope;
+  attribute FunctionBody body;
+}
+
+interface SkippableSingleParameterAndFunctionBody : Node {
+  attribute boolean skip;
+  attribute AssertedParameterScope? parameterScope;
+  attribute AssertedVarScope? bodyScope;
+  attribute Parameter param;
+  attribute FunctionBody body;
+}
+
+interface SkippableParametersAndFunctionBody : Node {
+  attribute boolean skip;
+  attribute AssertedParameterScope? parameterScope;
+  attribute AssertedVarScope? bodyScope;
+  attribute FormalParameters params;
+  attribute FunctionBody body;
+}
+
+interface SkippableParametersAndFunctionExpressionBody : Node {
+  attribute boolean skip;
+  attribute boolean? isNameCaptured;
+  attribute AssertedParameterScope? parameterScope;
+  attribute AssertedVarScope? bodyScope;
+  attribute FormalParameters params;
+  attribute FunctionBody body;
+}
+
+interface SkippableParametersAndArrowBody : Node {
+  attribute boolean skip;
+  attribute AssertedParameterScope? parameterScope;
+  attribute AssertedVarScope? bodyScope;
+  attribute FormalParameters params;
+  attribute (FunctionBody or Expression) body;
+}
+
 // `FunctionDeclaration`,
 // `GeneratorDeclaration`,
 // `AsyncFunctionDeclaration`
 interface FunctionDeclaration : Node {
   attribute boolean isAsync;
   attribute boolean isGenerator;
-  attribute AssertedParameterScope? parameterScope;
-  attribute AssertedVarScope? bodyScope;
   attribute BindingIdentifier name;
-  attribute FormalParameters params;
-  attribute FunctionBody body;
+  attribute SkippableParametersAndFunctionBody skippableBody;
 };
 
 interface Script : Node {
@@ -1352,45 +1372,73 @@ interface VariableDeclarator : Node {
   </emu-clause>
 
   <emu-clause id="sec-lazyformalparametersecmaify" aoid="LazyFormalParametersEcmaify">
-    <h1>LazyFormalParametersEcmaify ( _params_ )</h1>
+    <h1>LazyFormalParametersEcmaify ( _skippableNode_ )</h1>
     <emu-alg>
       1. NOTE: When a |FormalParameters| : [empty] tagged as being produced by a binary AST `FormalParameters` is evaluated at runtime, Ecmaify is run on the parameters at that time to delazify.
       1. TODO: The `length` property Function instances need delazifying.
+      1. Let _params_ be _skippableNode_`.params`.
+      1. Let _paramScope_ be _skippableNode_`.parameterScope`.
       1. Assert: _params_ is a `FormalParameters`.
-      1. Let _emptyParams_ be |FormalParameters| : [empty].
-      1. Let _currentScope_ be the current asserted scope.
-      1. Tag _emptyParams_ as being produced by _params_ in scope _currentScope_.
-      1. Return _emptyParams_.
+      1. If _skippableNode_`.skip` is *true*, then
+          1. Let _emptyParams_ be |FormalParameters| : [empty].
+          1. Tag _emptyParams_ as being produced by _params_ in scope _paramScope_.
+          1. Return _emptyParams_.
+      1. Else,
+          1. Let _enclosingScope_ be the current asserted scope.
+          1. Set the current asserted scope to _paramScope_.
+          1. Perform AddAssertedScopeTreeNode(_paramScope_, _enclosingScope_).
+          1. Let _delazifiedParams_ be ? EcmaifyFormalParameters(_params_).
+          1. Perform ? CheckAssertedScope(_paramScope_, _delazifiedParams_).
+          1. Return _delazifiedParams_.
     </emu-alg>
   </emu-clause>
 
   <emu-clause id="sec-lazycoverarrowparameterlistecmaify" aoid="LazyCoverArrowParameterListEcmaify">
-    <h1>LazyCoverArrowParameterListEcmaify ( _params_ )</h1>
+    <h1>LazyCoverArrowParameterListEcmaify ( _skippableNode_ )</h1>
     <emu-alg>
       1. NOTE: When a |CoverParenthesizedExpressionAndArrowParameterList| : <emu-t>(</emu-t> <emu-t>)</emu-t> tagged as being produced by a binary AST `FormalParameters` is evaluated at runtime, Ecmaify is run on the parameters at that time to delazify.
       1. TODO: The `length` property Function instances need delazifying.
+      1. Let _params_ be _skippableNode_`.params`.
+      1. Let _paramScope_ be _skippableNode_`.parameterScope`.
       1. Assert: _params_ is a `FormalParameters`.
-      1. Let _emptyArrowParams0_ be a |CoverParenthesizedExpressionAndArrowParameterList| : <emu-t>(</emu-t> <emu-t>)</emu-t>.
-      1. Let _emptyArrowParams_ be |ArrowParameters| : _emptyArrowParams0_.
-      1. Let _currentScope_ be the current asserted scope.
-      1. Tag _emptyArrowParams_ as being produced by _params_ in scope _currentScope_.
-      1. Return _emptyArrowParams_.
+      1. If _skippableNode_`.skip` is *true*, then
+          1. Let _emptyArrowParams0_ be a |CoverParenthesizedExpressionAndArrowParameterList| : <emu-t>(</emu-t> <emu-t>)</emu-t>.
+          1. Let _emptyArrowParams_ be |ArrowParameters| : _emptyArrowParams0_.
+          1. Tag _emptyArrowParams_ as being produced by _params_ in scope _paramScope_
+          1. Return _emptyArrowParams_.
+      1. Else,
+          1. Let _enclosingScope_ be the current asserted scope.
+          1. Set the current asserted scope to _paramScope_.
+          1. Perform AddAssertedScopeTreeNode(_paramScope_, _enclosingScope_).
+          1. Let _delazifiedParams_ be ? EcmaifyCoverArrowParameterList(_params_).
+          1. Perform ? CheckAssertedScope(_paramScope_, _delazifiedParams_).
+          1. Return _delazifiedParams_.
     </emu-alg>
   </emu-clause>
 
   <emu-clause id="sec-lazypropertysetparameterlistecmaify" aoid="LazyPropertySetParameterListEcmaify">
-    <h1>LazyPropertySetParameterListEcmaify ( _param_ )</h1>
+    <h1>LazyPropertySetParameterListEcmaify ( _skippableNode_ )</h1>
     <emu-alg>
       1. NOTE: When a |PropertySetParameterList| tagged as being produced by a binary AST `Parameter` is evaluated at runtime, Ecmaify is run on the parameter at that time to delazify.
       1. TODO: The `length` property Function instances need delazifying.
       1. TODO: |FormalParameter| needs an empty variant for tagging.
+      1. Let _params_ be _skippableNode_`.params`.
+      1. Let _paramScope_ be _skippableNode_`.parameterScope`.
       1. Assert: _param_ is a `Parameter`.
-      1. Let _placeholder_ be |Identifier| : <emu-t>_</emu-t>.
-      1. Let _emptyPropSetParam0_ be |FormalParameter| : _placeholder_.
-      1. Let _emptyPropSetParam_ be |PropertySetParameterList| : _emptyPropSetParam0_.
-      1. Let _currentScope_ be the current asserted scope.
-      1. Tag _emptyPropSetParam_ as being produced by _param_ in scope _currentScope_.
-      1. Return _emptyPropSetParam_.
+      1. If _skippableNode_`.skip` is *true*, then
+          1. Let _placeholder_ be |Identifier| : <emu-t>_</emu-t>.
+          1. Let _emptyPropSetParam0_ be |FormalParameter| : _placeholder_.
+          1. Let _emptyPropSetParam_ be |PropertySetParameterList| : _emptyPropSetParam0_.
+          1. Let _currentScope_ be the current asserted scope.
+          1. Tag _emptyPropSetParam_ as being produced by _param_ in scope _paramScope_.
+          1. Return _emptyPropSetParam_.
+      1. Else,
+          1. Let _enclosingScope_ be the current asserted scope.
+          1. Set the current asserted scope to _paramScope_.
+          1. Perform AddAssertedScopeTreeNode(_paramScope_, _enclosingScope_).
+          1. Let _delazifiedParams_ be ? EcmaifyPropertySetParameterList(_params_).
+          1. Perform ? CheckAssertedScope(_paramScope_, _delazifiedParams_).
+          1. Return _delazifiedParams_.
     </emu-alg>
   </emu-clause>
 
@@ -1398,13 +1446,23 @@ interface VariableDeclarator : Node {
     <h1>LazyFunctionBodyEcmaify ( _parent_ )</h1>
     <emu-alg>
       1. NOTE: When a |FunctionBody| tagged as being produced by a binary AST is evaluated at runtime, Ecmaify is run on the function at that time to delazify.
-      1. Let _emptyStmt_ be |StatementListItem| : |EmptyStatement|.
-      1. Let _stmts_ be |StatementList| : _emptyStmt_.
-      1. Let _funcStmts_ be |FunctionStatementList| : _stmts_.
-      1. Let _body_ be |FunctionBody| : _funcStmts_.
-      1. Let _currentScope_ be the current asserted scope.
-      1. Tag _body_ as being produced by _parent_ in scope _currentScope_.
-      1. Return _body_.
+      1. Let _skippableNode_ be _parent_`.skippableBody`.
+      1. If _skippableNode_`.skip` is *true*, then
+          1. Let _emptyStmt_ be |StatementListItem| : |EmptyStatement|.
+          1. Let _stmts_ be |StatementList| : _emptyStmt_.
+          1. Let _funcStmts_ be |FunctionStatementList| : _stmts_.
+          1. Let _body_ be |FunctionBody| : _funcStmts_.
+          1. Let _currentScope_ be the current asserted scope.
+          1. Tag _body_ as being produced by _parent_ in scope _currentScope_.
+          1. Return _body_.
+      1. Else,
+          1. Let _enclosingScope_ be the current asserted scope.
+          1. Let _bodyScope_ be _skippableNode_`.bodyScope`.
+          1. Set the current asserted scope to _bodyScope_.
+          1. Perform AddAssertedScopeTreeNode(_bodyScope_, _enclosingScope_).
+          1. Let _delazifiedBody_ be ? EcmaifyFunctionBody(_skippableNode_`.body`).
+          1. Perform ? CheckAssertedScope(_bodyScope_, _delazifiedBody_).
+          1. Return |FunctionBody| : _delazifiedBody_.
     </emu-alg>
   </emu-clause>
 
@@ -1666,16 +1724,20 @@ interface VariableDeclarator : Node {
     <h1>EcmaifyFunctionDeclaration ( _func_ )</h1>
     <emu-alg>
       1. Assert: _func_ is a `FunctionDeclaration`.
+      1. Let _enclosingScope_ be the current asserted scope.
       1. Let _funcName_ be ? Ecmaify(_func_`.name`).
-      1. Let _params_ be ? LazyFormalParametersEcmaify(_func_`.params`).
+      1. Let _params_ be ? LazyFormalParametersEcmaify(_func_`.skippableBody`).
       1. If _func_`.isAsync` is *true*, then
           1. Let _body_ be |AsyncFunctionBody| : ? LazyFunctionBodyEcmaify(_func_).
+          1. Set the current asserted scope to _enclosingScope_.
           1. Return |AsyncFunctionDeclaration| : <emu-t>async</emu-t> <emu-t>function</emu-t> _funcName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
       1. Else if _func_`.isGenerator` is *true*, then
           1. Let _body_ be |GeneratorBody| : ? LazyFunctionBodyEcmaify(_func_).
+          1. Set the current asserted scope to _enclosingScope_.
           1. Return |GeneratorDeclaration| : <emu-t>function</emu-t> <emu-t>`*`</emu-t> _funcName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
       1. Else,
           1. Let _body_ be ? LazyFunctionBodyEcmaify(_func_).
+          1. Set the current asserted scope to _enclosingScope_.
           1. Return |FunctionDeclaration| : <emu-t>function</emu-t> _funcName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
     </emu-alg>
   </emu-clause>
@@ -1968,8 +2030,10 @@ interface VariableDeclarator : Node {
     <emu-alg>
       1. NOTE: Arrow expressions are canonicalized to use parenthesized parameters and braced bodies.
       1. Assert: _litArrow_ is an `ArrowExpression`.
-      1. Let _params_ be : ? LazyCoverArrowParameterListEcmaify(_litArrow_`.params`).
+      1. Let _enclosingScope_ be the current asserted scope.
+      1. Let _params_ be : ? LazyCoverArrowParameterListEcmaify(_litArrow_`.skippableBody`).
       1. Let _lazyBody_ be ? LazyFunctionBodyEcmaify(_litArrow_).
+      1. Set the current asserted scope to _enclosingScope_.
       1. If _litArrow_`.isAsync` is *true*, then
           1. Let _asyncHead_ be |AsyncArrowHead| : <emu-t>async</emu-t> _params_.
           1. Let _asyncBody0_ be |AsyncFunctionBody| : _lazyBody_.
@@ -2136,17 +2200,30 @@ interface VariableDeclarator : Node {
     <h1>EcmaifyFunctionExpression ( _func_ )</h1>
     <emu-alg>
       1. Assert: _func_ is a `FunctionExpression`.
+      1. Let _enclosingScope_ be the current asserted scope.
       1. Let _maybeFuncName_ be an empty Parse Node.
-      1. If _func_`.name` not *null*, then set _maybeFuncName_ to ? Ecmaify(_func_`.name`).
-      1. Let _params_ be ? LazyFormalParametersEcmaify(_func_`.params`).
+      1. If _func_`.name` not *null*, then
+          1. Set _maybeFuncName_ to ? Ecmaify(_func_`.name`).
+          1. If _func_`.skippableBody.isNameCaptured` is *true*, then
+              1. NOTE: Named function expressions may capture their name, which synthesizes a block scope containing only the function name enclosing the entire function expression.
+              1. Let _synthNamedLambdaScope_ be an `AssertedBlockScope`.
+              1. Set _synthNamedLambdaScope_`.lexicallyDeclaredNames` to be a new `FrozenArray&lt;IdentifierName&gt;` of length 1 containing _maybeFuncName_.
+              1. Set _synthNamedLambdaScope_`.capturedNames` to be a new `FrozenArray&lt;IdentifierName&gt;` of length 1 containing _maybeFuncName_.
+              1. Set _synthNamedLambdaScope_`.hasDirectEval` to _enclosingScope_`.hasDirectEval`.
+              1. Perform AddAssertedScopeTreeNode(_synthNamedLambdaScope_, _enclosingScope_).
+              1. Set the current asserted scope to _synthNamedLambdaScope_.
+      1. Let _params_ be ? LazyFormalParametersEcmaify(_func_`.skippableBody`).
       1. If _func_`.isAsync` is *true*, then
           1. Let _body_ be |AsyncFunctionBody| : ? LazyFunctionBodyEcmaify(_func_).
+          1. Set the current asserted scope to _enclosingScope_.
           1. Return |AsyncFunctionExpression| : <emu-t>async</emu-t> <emu-t>function</emu-t> _maybeFuncName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
       1. Else if _func_`.isGenerator` is *true*, then
           1. Let _body_ be |GeneratorBody| : ? LazyFunctionBodyEcmaify(_func_).
+          1. Set the current asserted scope to _enclosingScope_.
           1. Return |GeneratorExpression| : <emu-t>function</emu-t> <emu-t>`*`</emu-t> _maybeFuncName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
       1. Else,
           1. Let _body_ be ? LazyFunctionBodyEcmaify(_func_).
+          1. Set the current asserted scope to _enclosingScope_.
           1. Return |FunctionExpression| : <emu-t>function</emu-t> _maybeFuncName_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
     </emu-alg>
   </emu-clause>
@@ -2307,18 +2384,22 @@ interface VariableDeclarator : Node {
     <h1>EcmaifyMethod ( _method_ )</h1>
     <emu-alg>
       1. Assert: _method_ is a `Method`.
+      1. Let _enclosingScope_ be the current asserted scope.
       1. Let _name_ be |PropertyName| : ? Ecmaify(_method_`.name`).
-      1. Let _params_ be |UniqueFormalParameters| : ? LazyFormalParametersEcmaify(_method_`.params`).
+      1. Let _params_ be |UniqueFormalParameters| : ? LazyFormalParametersEcmaify(_method_`.skippableBody`).
       1. If _method_`.isAsync` is |true|, then
           1. Let _body_ be |AsyncFunctionBody| : ? LazyFunctionBodyEcmaify(_method_).
+          1. Set the current asserted scope to _enclosingScope_.
           1. Let _m_ be |AsyncMethod| : <emu-t>async</emu-t> _name_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
           1. Return |MethodDefinition| : _m_.
       1. Else if _method_`.isGenerator` is |true|, then
           1. Let _body_ be |GeneratorBody| : ? LazyFunctionBodyEcmaify(_method_).
+          1. Set the current asserted scope to _enclosingScope_.
           1. Let _m_ |GeneratorMethod| : <emu-t>`*`</emu-t> _name_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
           1. Return |MethodDefinition| : _m_.
       1. Else,
           1. Let _body_ be ? LazyFunctionBodyEcmaify(_method_).
+          1. Set the current asserted scope to _enclosingScope_.
           1. Return |MethodDefinition| : _name_ <emu-t>(</emu-t> _params_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
     </emu-alg>
   </emu-clause>
@@ -2327,8 +2408,10 @@ interface VariableDeclarator : Node {
     <h1>EcmaifyGetter ( _getter_ )</h1>
     <emu-alg>
       1. Assert: _getter_ is a `Getter`.
+      1. Let _enclosingScope_ be the current asserted scope.
       1. Let _name_ be |PropertyName| : ? Ecmaify(_getter_`.name`).
       1. Let _body_ be ? LazyFunctionBodyEcmaify(_getter_).
+      1. Set the current asserted scope to _enclosingScope_.
       1. Return |MethodDefinition| : <emu-t>get</emu-t> _name_ <emu-t>(</emu-t> <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
     </emu-alg>
   </emu-clause>
@@ -2337,9 +2420,11 @@ interface VariableDeclarator : Node {
     <h1>EcmaifySetter ( _setter_ )</h1>
     <emu-alg>
       1. Assert: _setter_ is a `Setter`.
+      1. Let _enclosingScope_ be the current asserted scope.
       1. Let _name_ be |PropertyName| : ? Ecmaify(_setter_`.name`).
       1. Let _param_ be ? LazyPropertySetParameterListEcmaify(_setter_`.param`).
       1. Let _body_ be ? LazyFunctionBodyEcmaify(_setter_).
+      1. Set the current asserted scope to _enclosingScope_.
       1. Return |MethodDefinition| : <emu-t>set</emu-t> _name_ <emu-t>(</emu-t> _param_ <emu-t>)</emu-t> <emu-t>{</emu-t> _body_ <emu-t>}</emu-t>.
     </emu-alg>
   </emu-clause>
@@ -3000,7 +3085,9 @@ interface VariableDeclarator : Node {
       1. If |FunctionStatementList| is a |StatementList| consisting of a single |EmptyStatement| that is tagged as being produced by _funcNode_ in scope _scope_, then
           1. Assert: The current asserted scope is *null*.
           1. Set the current asserted scope to _scope_.
-          1. If _funcNode_ is a `FunctionExpression`, _funcNode_`.name` is not *null*, and _funcNode_`.isNameCaptured` is *true*, then
+          1. Let _skippableNode_ be _funcNode_`.skippableBody`.
+          1. Assert: _skippableNode_ is a `SkippableFunctionBody`, a `SkippableSingleParameterAndFunctionBody`, a `SkippableParametersAndFunctionBody`, a `SkippableParametersAndFunctionExpressionBody`, or a `SkippableParametersAndArrowBody`.
+          1. If _funcNode_ is a `FunctionExpression`, _funcNode_`.name` is not *null*, and _skippabelBodyNode_`.isNameCaptured` is *true*, then
               1. NOTE: Named function expressions may capture their name, which synthesizes a block scope containing only the function name enclosing the entire function expression.
               1. Let _synthNamedLambdaScope_ be an `AssertedBlockScope`.
               1. Set _synthNamedLambdaScope_`.lexicallyDeclaredNames` to be a new `FrozenArray&lt;IdentifierName&gt;` of length 1 containing _funcNode_`.name`.
@@ -3008,10 +3095,11 @@ interface VariableDeclarator : Node {
               1. Set _synthNamedLambdaScope_`.hasDirectEval` to _scope_`.hasDirectEval`.
               1. Perform AddAssertedScopeTreeNode(_synthNamedLambdaScope_, _scope_).
               1. Set _scope_ to _synthNamedLambdaScope_.
-          1. Perform AddAssertedScopeTreeNode(_s_`.parameterScope`, _scope_).
-          1. Perform AddAssertedScopeTreeNode(_s_`.bodyScope`, _s_`.parameterScope`).
+          1. Perform AddAssertedScopeTreeNode(_skippableNode_`.parameterScope`, _scope_).
+          1. Perform AddAssertedScopeTreeNode(_skippableNode_`.bodyScope`, _skippableNode_`.parameterScope`).
           1. Let _delazifiedParams_ be the result of Delazify on the Parse Node that is _functionObject_.[[FormalParameters]] passing _functionObject_.
-          1. Let _delazifiedBody_ be ? EcmaifyFunctionBody(_funcNode_`.body`).
+          1. Set the current asserted scope to _skippableNode_`.bodyScope`.
+          1. Let _delazifiedBody_ be ? EcmaifyFunctionBody(_skippableNode_`.body`).
           1. Perform ? ValidateAndUpdateFunctionObject(_funcNode_, _functionObject_, _delazifiedBody_, _delazifiedParams_).
           1. Perform ? CheckAssertedScope(_funcNode_`.parameterScope`, _delazifiedParams_).
           1. Perform ? CheckAssertedScope(_funcNode_`.bodyScope`, _delazifiedBody_).
@@ -3033,7 +3121,8 @@ interface VariableDeclarator : Node {
 
     <emu-grammar>UniqueFormalParameters : FormalParameters</emu-grammar>
     <emu-alg>
-      1. Return the result of Delazify of |FormalParameters|.
+      1. Let _delazifiedParams_ be the result of Delazify of |FormalParameters| passing *null*.
+      1. Return |UniqueFormalParameters| : _delazifiedParams_.
     </emu-alg>
 
     <emu-grammar>ArrowParameters : CoverParenthesizedExpressionAndArrowParameterList</emu-grammar>
@@ -3042,7 +3131,7 @@ interface VariableDeclarator : Node {
           1. Set the current asserted scope to _scope_.
           1. Let _params_ be ? EcmaifyCoverArrowParameterList(_paramsAst_).
           1. Set the current asserted scope to *null*.
-          1. Return _params.
+          1. Return _params._
       1. Else return |ArrowParameters|.
     </emu-alg>
 
@@ -3063,7 +3152,7 @@ interface VariableDeclarator : Node {
     <p>With parameters _functionObject_ and List _argumentsList_.</p>
     <emu-grammar>FunctionBody : FunctionStatementList</emu-grammar>
     <emu-alg>
-      1. <ins>Let _delazifiedBody_ be the Parse Node that is the result of Delazify of |FunctionBody|.</ins>
+      1. <ins>Let _delazifiedBody_ be the Parse Node that is the result of Delazify of |FunctionBody| passing _functionBody_.</ins>
       1. <ins>If _delazifiedBody_ is a different Parse Node from |FunctionBody|, then</ins>
           1. <ins>Return the result of EvaluateBody of the Parse Node that is _functionObject_.[[ECMAScriptCode]] passing _functionObject_ and _argumentsList_.</ins>
       1. <ins>Else,</ins>
@@ -3073,7 +3162,7 @@ interface VariableDeclarator : Node {
 
     <emu-grammar>GeneratorBody : FunctionBody</emu-grammar>
     <emu-alg>
-      1. <ins>Let _delazifiedBody_ be the Parse Node that is the result of Delazify of |FunctionBody|.</ins>
+      1. <ins>Let _delazifiedBody_ be the Parse Node that is the result of Delazify of |FunctionBody| passing _functionObject_.</ins>
       1. <ins>If _delazifiedBody_ is a different Parse Node from |FunctionBody|, then</ins>
           1. <ins>Return the result of EvaluateBody of the Parse Node that is _functionObject_.[[ECMAScriptCode]] passing _functionObject_ and _argumentsList_.</ins>
       1. <ins>Else,</ins>
@@ -3085,7 +3174,7 @@ interface VariableDeclarator : Node {
 
     <emu-grammar>AsyncFunctionBody : FunctionBody</emu-grammar>
     <emu-alg>
-      1. <ins>Let _delazifiedBody_ be the Parse Node that is the result of Delazify of |FunctionBody|.</ins>
+      1. <ins>Let _delazifiedBody_ be the Parse Node that is the result of Delazify of |FunctionBody| passing _functionObject_.</ins>
       1. <ins>If _delazifiedBody_ is a different Parse Node from |FunctionBody|, then</ins>
           1. <ins>Return the result of EvaluateBody of the Parse Node that is _functionObject_.[[ECMAScriptCode]] passing _functionObject_ and _argumentsList_.</ins>
       1. <ins>Else,</ins>
