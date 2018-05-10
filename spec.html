@@ -110,6 +110,12 @@ interface AssertedBlockScope {
   attribute boolean hasDirectEval;
 };
 
+interface AssertedScriptGlobalLexicalScope {
+  attribute FrozenArray&lt;IdentifierName&gt; lexicallyDeclaredNames;
+  attribute FrozenArray&lt;IdentifierName&gt; capturedNames;
+  attribute boolean hasDirectEval;
+};
+
 interface AssertedVarScope {
   attribute FrozenArray&lt;IdentifierName&gt; lexicallyDeclaredNames;
   attribute FrozenArray&lt;IdentifierName&gt; varDeclaredNames;
@@ -882,7 +888,7 @@ interface FunctionDeclaration : Node {
 };
 
 interface Script : Node {
-  attribute AssertedVarScope? scope;
+  attribute AssertedScriptGlobalLexicalScope? scope;
   attribute FrozenArray&lt;Directive&gt; directives;
   attribute FrozenArray&lt;Statement&gt; statements;
 };
@@ -2735,7 +2741,7 @@ interface VariableDeclarator : Node {
             [[AssertedScope]]
           </td>
           <td>
-            An `AssertedBlockScope`, `AssertedVarScope`, `AssertedParameterScope`, or `AssertedBoundNamesScope`
+            An `AssertedBlockScope`, `AssertedScriptGlobalLexicalScope`, `AssertedVarScope`, `AssertedParameterScope`, or `AssertedBoundNamesScope`
           </td>
           <td>
             The payload.
@@ -2809,7 +2815,7 @@ interface VariableDeclarator : Node {
       <emu-alg>
         1. Assert: _scope_ is not *null*.
         1. Let _declaredNames_ be a new empty List.
-        1. If _scope_ is an `AssertedBlockScope` or an `AssertedVarScope`, then
+        1. If _scope_ is an `AssertedBlockScope` or an `AssertedScriptGlobalLexicalScope` or an `AssertedVarScope`, then
             1. If _scope_ is an `AssertedVarScope`, then
                 1. Append the elements of _scope_`.varDeclaredNames` to _declaredNames_.
             1. Append the elements of _scope_`.lexicallyDeclaredNames` to _declaredNames_.
@@ -2824,7 +2830,7 @@ interface VariableDeclarator : Node {
     <emu-clause id="sec-checkassertedscope" aoid="CheckAssertedScope">
       <h1>CheckAssertedScope ( _scope_ , _parseTree_ )</h1>
       <emu-alg>
-        1. Assert: _scope_ is an `AssertedBlockScope?` or an `AssertedVarScope?` or an `AssertedParameterScope?` or an `AssertedBoundNamesScope?`.
+        1. Assert: _scope_ is an `AssertedBlockScope?` or an `AssertedScriptGlobalLexicalScope` or an `AssertedVarScope?` or an `AssertedParameterScope?` or an `AssertedBoundNamesScope?`.
         1. Assert: _parseTree_ is a non-empty Parse Node.
         1. If _scope_ is *null*, return.
         1. Let _declaredNames_ be AllDeclaredNames(_scope_).
@@ -2832,7 +2838,7 @@ interface VariableDeclarator : Node {
         1. For each _cn_ in _scope_`.capturedNames`, do
             1. If _cn_ is not in _declaredNames_, then throw a *SyntaxError* exception.
         1. NOTE: All asserted declared names must be declared.
-        1. If _scope_ is an `AssertedBlockScope` or an `AssertedVarScope`, then
+        1. If _scope_ is an `AssertedBlockScope` or an `AssertedScriptGlobalLexicalScope` or an `AssertedVarScope`, then
             1. If _scope_ is an `AssertedVarScope`, then
                 1. Let _varDeclaredNames_ be the VarDeclaredNames of _parseTree_.
                 1. Perform ? CheckDeclaredNames(_scope_`.varDeclaredNames`, _varDeclaredNames_).
@@ -2849,6 +2855,7 @@ interface VariableDeclarator : Node {
         1. Let _freeNames_ be the FreeNames of _parseTree_.
         1. For each _fn_ in _freeNames_, do
             1. Let _scopeNode_ be FindAssertedScopeTreeNode(_scope_).
+            1. Let _outermostScope_ be *null*.
             1. Let _foundAssertedCapture_ be *false*.
             1. Repeat, while _scopeNode_.[[Enclosing]] is not *null* and _foundAssertedCapture_ is *false*,
                 1. Let _enclosingScope_ be _scopeNode_.[[Enclosing]].[[AssertedScope]].
@@ -2856,8 +2863,12 @@ interface VariableDeclarator : Node {
                 1. If _fn_ is in _enclosingDeclaredNames_, then
                     1. If _fn_ is in _enclosingScope_`.capturedNames`, then set _foundAssertedCapture_ to *true*.
                     1. Else throw a *SyntaxError* exception.
-                1. Else set _scopeNode_ to _scopeNode_.[[Enclosing]].
-            1. If _foundAssertedCapture_ is *false*, then throw a *SyntaxError* exception.
+                1. Else,
+                    1. Set _outermostScope_ to _scopeNode_.
+                    1. Set _scopeNode_ to _scopeNode_.[[Enclosing]].
+            1. If _foundAssertedCapture_ is *false*, then
+                1. NOTE: For scripts, global vars are properties on the global object and not bindings.
+                1. If _outermostScope_ is not an `AssertedScriptGlobalLexicalScope`, then throw a *SyntaxError* exception.
         1. NOTE: The presence of a direct eval must have been asserted in an enclosing scope. It is permitted to assert having a direct eval even if a direct eval is never observed in scope.
         1. If _parseTree_ contains a direct eval, then
             1. Let _scopeNode_ be FindAssertedScopeTreeNode(_scope_).
