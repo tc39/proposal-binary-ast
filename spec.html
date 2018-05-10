@@ -862,7 +862,7 @@ interface SkippableParametersAndFunctionBody : Node {
 
 interface SkippableParametersAndFunctionExpressionBody : Node {
   attribute boolean skip;
-  attribute boolean? isNameCaptured;
+  attribute boolean? isFunctionNameCaptured;
   attribute AssertedParameterScope? parameterScope;
   attribute AssertedVarScope? bodyScope;
   attribute FormalParameters params;
@@ -2210,7 +2210,7 @@ interface VariableDeclarator : Node {
       1. Let _maybeFuncName_ be an empty Parse Node.
       1. If _func_`.name` not *null*, then
           1. Set _maybeFuncName_ to ? Ecmaify(_func_`.name`).
-          1. If _func_`.skippableBody.isNameCaptured` is *true*, then
+          1. If _func_`.skippableBody.isFunctionNameCaptured` is *true*, then
               1. NOTE: Named function expressions may capture their name, which synthesizes a block scope containing only the function name enclosing the entire function expression.
               1. Let _synthNamedLambdaScope_ be an `AssertedBlockScope`.
               1. Set _synthNamedLambdaScope_`.lexicallyDeclaredNames` to be a new `FrozenArray&lt;IdentifierName&gt;` of length 1 containing _maybeFuncName_.
@@ -3098,7 +3098,7 @@ interface VariableDeclarator : Node {
           1. Set the current asserted scope to _scope_.
           1. Let _skippableNode_ be _funcNode_`.skippableBody`.
           1. Assert: _skippableNode_ is a `SkippableFunctionBody`, a `SkippableSingleParameterAndFunctionBody`, a `SkippableParametersAndFunctionBody`, a `SkippableParametersAndFunctionExpressionBody`, or a `SkippableParametersAndArrowBody`.
-          1. If _funcNode_ is a `FunctionExpression`, _funcNode_`.name` is not *null*, and _skippabelBodyNode_`.isNameCaptured` is *true*, then
+          1. If _funcNode_ is a `FunctionExpression`, _funcNode_`.name` is not *null*, and _skippabelBodyNode_`.isFunctionNameCaptured` is *true*, then
               1. NOTE: Named function expressions may capture their name, which synthesizes a block scope containing only the function name enclosing the entire function expression.
               1. Let _synthNamedLambdaScope_ be an `AssertedBlockScope`.
               1. Set _synthNamedLambdaScope_`.lexicallyDeclaredNames` to be a new `FrozenArray&lt;IdentifierName&gt;` of length 1 containing _funcNode_`.name`.
