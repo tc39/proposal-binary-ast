@@ -101,37 +101,48 @@ enum UpdateOperator {
   "--"
 };
 
+enum AssertedDeclaredKind {
+  "var",
+  "non-const lexical",
+  "const lexical"
+};
 
 // deferred assertions
 
+interface AssertedDeclaredName {
+  attribute IdentifierName name;
+  attribute AssertedDeclaredKind kind;
+  attribute boolean isCaptured;
+}
+
+interface AssertedBoundName {
+  attribute IdentifierName name;
+  attribute boolean isCaptured;
+}
+
 interface AssertedBlockScope {
-  attribute FrozenArray&lt;IdentifierName&gt; lexicallyDeclaredNames;
-  attribute FrozenArray&lt;IdentifierName&gt; capturedNames;
+  attribute FrozenArray&lt;AssertedDeclaredName&gt; declaredNames;
   attribute boolean hasDirectEval;
 };
 
-interface AssertedScriptGlobalLexicalScope {
-  attribute FrozenArray&lt;IdentifierName&gt; lexicallyDeclaredNames;
-  attribute FrozenArray&lt;IdentifierName&gt; capturedNames;
+interface AssertedScriptGlobalScope {
+  attribute FrozenArray&lt;AssertedDeclaredName&gt; declaredNames;
   attribute boolean hasDirectEval;
 };
 
 interface AssertedVarScope {
-  attribute FrozenArray&lt;IdentifierName&gt; lexicallyDeclaredNames;
-  attribute FrozenArray&lt;IdentifierName&gt; varDeclaredNames;
-  attribute FrozenArray&lt;IdentifierName&gt; capturedNames;
+  attribute FrozenArray&lt;AssertedDeclaredName&gt; declaredNames;
   attribute boolean hasDirectEval;
 };
 
 interface AssertedParameterScope {
-  attribute FrozenArray&lt;IdentifierName&gt; parameterNames;
-  attribute FrozenArray&lt;IdentifierName&gt; capturedNames;
+  attribute FrozenArray&lt;AssertedBoundName&gt; boundNames;
   attribute boolean hasDirectEval;
+  attribute boolean isSimpleParameterList;
 };
 
 interface AssertedBoundNamesScope {
-  attribute FrozenArray&lt;IdentifierName&gt; boundNames;
-  attribute FrozenArray&lt;IdentifierName&gt; capturedNames;
+  attribute FrozenArray&lt;AssertedBoundName&gt; boundNames;
   attribute boolean hasDirectEval;
 };
 
@@ -892,7 +903,7 @@ interface FunctionDeclaration : Node {
 };
 
 interface Script : Node {
-  attribute AssertedScriptGlobalLexicalScope? scope;
+  attribute AssertedScriptGlobalScope? scope;
   attribute FrozenArray&lt;Directive&gt; directives;
   attribute FrozenArray&lt;Statement&gt; statements;
 };
@@ -2778,7 +2789,7 @@ interface VariableDeclarator : Node {
             [[AssertedScope]]
           </td>
           <td>
-            An `AssertedBlockScope`, `AssertedScriptGlobalLexicalScope`, `AssertedVarScope`, `AssertedParameterScope`, or `AssertedBoundNamesScope`
+            An `AssertedBlockScope`, `AssertedScriptGlobalScope`, `AssertedVarScope`, `AssertedParameterScope`, or `AssertedBoundNamesScope`
           </td>
           <td>
             The payload.
@@ -2826,9 +2837,11 @@ interface VariableDeclarator : Node {
     </emu-clause>
 
     <emu-clause id="sec-checkdeclarednames" aoid="CheckDeclaredNames">
-      <h1>CheckDeclaredNames ( _expectedDeclared_, _actualDeclared_ )</h1>
+      <h1>CheckDeclaredNames ( _expectedDeclared_, _kind_, _actualDeclared_ )</h1>
       <emu-alg>
-        1. Let _unseen_ be a copy of _expectedDeclared_.
+        1. Let _unseen_ be a new empty List.
+        1. For each _d_ in _expectedDeclared_, do
+            1. If _d_`.kind` is _kind_, then add _d_`.name` as the last element of _unseen_.
         1. For each _dn_ in _actualDeclared_, do
             1. If _dn_ is not in _unseen_, then throw a *SyntaxError* exception.
             1. Remove _dn_ from _unseen_.
@@ -2836,9 +2849,12 @@ interface VariableDeclarator : Node {
       </emu-alg>
     </emu-clause>
 
-    <emu-clause id="sec-checkdeclarednames" aoid="CheckDeclaredNames">
-      <h1>CheckParameterNames ( _expectedParams_, _actualParams_ )</h1>
+    <emu-clause id="sec-checkparameternames" aoid="CheckParameterNames">
+      <h1>CheckParameterNames ( _expectedParams0_, _actualParams_ )</h1>
       <emu-alg>
+        1. Let _expectedParams_ be a new empty List.
+        1. For each _p_ in _expectedParams0_, do
+            1. Add _p_`.name` as the last element of _expectedParams_.
         1. Let _idx_ be 0.
         1. If _expectedParams_ and _actualParams_ have different lengths, then throw a *SyntaxError* exception.
         1. For each _pn_ in _actualParams_ in List order, do
@@ -2847,47 +2863,47 @@ interface VariableDeclarator : Node {
       </emu-alg>
     </emu-clause>
 
-    <emu-clause id="sec-alldeclarednames" aoid="AllDeclaredNames">
-      <h1>AllDeclaredNames ( _scope_ )</h1>
+    <emu-clause id="sec-checkboundnames" aoid="CheckBOundNames">
+      <h1>CheckBoundNames ( _expectedBound_, _actualBound_ )</h1>
       <emu-alg>
-        1. Assert: _scope_ is not *null*.
-        1. Let _declaredNames_ be a new empty List.
-        1. If _scope_ is an `AssertedBlockScope` or an `AssertedScriptGlobalLexicalScope` or an `AssertedVarScope`, then
-            1. If _scope_ is an `AssertedVarScope`, then
-                1. Append the elements of _scope_`.varDeclaredNames` to _declaredNames_.
-            1. Append the elements of _scope_`.lexicallyDeclaredNames` to _declaredNames_.
-        1. Else if _scope_ is an `AssertedParameterScope`, then
-            1. Append the elements of _scope_`.parameterNames` to _declaredNames_.
-        1. Else,
-            1. Append the elements of _scope_`.boundNames` to _declaredNames_.
-        1. Return _declaredNames_.
+        1. Let _unseen_ be a new empty List.
+        1. For each _b_ in _expectedBound_, do
+            1. Add _b_`.name` as the last element of _unseen_.
+        1. For each _dn_ in _actualBound_, do
+            1. If _dn_ is not in _unseen_, then throw a *SyntaxError* exception.
+            1. Remove _dn_ from _unseen_.
+        1. If _unseen_ has length greater than 0, then throw a *SyntaxError* exception.
       </emu-alg>
     </emu-clause>
 
     <emu-clause id="sec-checkassertedscope" aoid="CheckAssertedScope">
       <h1>CheckAssertedScope ( _scope_ , _parseTree_ )</h1>
       <emu-alg>
-        1. Assert: _scope_ is an `AssertedBlockScope?` or an `AssertedScriptGlobalLexicalScope` or an `AssertedVarScope?` or an `AssertedParameterScope?` or an `AssertedBoundNamesScope?`.
+        1. Assert: _scope_ is an `AssertedBlockScope?` or an `AssertedScriptGlobalScope?` or an `AssertedVarScope?` or an `AssertedParameterScope?` or an `AssertedBoundNamesScope?`.
         1. Assert: _parseTree_ is a non-empty Parse Node.
         1. If _scope_ is *null*, then return.
-        1. Let _declaredNames_ be AllDeclaredNames(_scope_).
-        1. NOTE: All captured names must be asserted bindings in the scope.
-        1. For each _cn_ in _scope_`.capturedNames`, do
-            1. If _cn_ is not in _declaredNames_, then throw a *SyntaxError* exception.
-        1. NOTE: All asserted declared names must be declared.
-        1. If _scope_ is an `AssertedBlockScope` or an `AssertedScriptGlobalLexicalScope` or an `AssertedVarScope`, then
-            1. If _scope_ is an `AssertedVarScope`, then
-                1. Let _varDeclaredNames_ be the VarDeclaredNames of _parseTree_.
-                1. Perform ? CheckDeclaredNames(_scope_`.varDeclaredNames`, _varDeclaredNames_).
-            1. Let _lexDeclaredNames_ be the LexicallyDeclaredNames of _parseTree_.
-            1. Perform ? CheckDeclaredNames(_scope_`.lexicallyDeclaredNames`, _lexDeclaredNames_).
+        1. NOTE: All asserted declared names must be declared, and all asserted bound names must be bound.
+        1. If _scope_ is an `AssertedBlockScope` or an `AssertedScriptGlobalScope` or an `AssertedVarScope`, then
+            1. Let _varDeclaredNames_ be the VarDeclaredNames of _parseTree_.
+            1. Perform ? CheckDeclaredNames(_scope_`.declaredNames`, `"var"`, _varDeclaredNames_).
+            1. Let _lexDeclarations_ be the LexicallyScopedDeclarations of _parseTree_.
+            1. Let _constLexicallyDeclaredNames_ be a new empty List.
+            1. Let _nonConstLexicallyDeclaredNames_ be a new empty List.
+            1. For each _d_ in _lexDeclarations_, do
+                1. If IsConstantDeclaration of _d_ is *true*, then
+                    1. Append to _constLexicallyDeclaredNames_ the elements of BoundNames of _d_.
+                1. Else,
+                    1. Append to _nonConstLexicallyDeclaredNames_ the elements of BoundNames of _d_.
+            1. Perform ? CheckDeclaredNames(_scope_`.lexicallyDeclaredNames`, `"const lexical"`, _constLexicallyDeclaredNames_).
+            1. Perform ? CheckDeclaredNames(_scope_`.lexicallyDeclaredNames`, `"non-const lexical"`, _nonConstLexicallyDeclaredNames_).
         1. Else if _scope_ is an `AssertedParameterScope`, then
             1. NOTE: The positions as well as the names of parameters must match.
             1. Let _paramNames_ be the BoundNames of _parseTree_.
-            1. Perform ? CheckParameterNames(_scope_`.parameterNames`, _paramNames_).
+            1. Perform ? CheckParameterNames(_scope_`.boundNames`, _boundNames_).
+            1. If _scope_`.isSimpleParameterList` is not the same value as IsSimpleParameterList of _parseTree_, then throw a *SyntaxError* exception.
         1. Else,
             1. Let _boundNames_ be the BoundNames of _parseTree_.
-            1. Perform ? CheckDeclaredNames(_scope_`.boundNames`, _boundNames_).
+            1. Perform ? CheckBoundNames(_scope_`.boundNames`, _boundNames_).
         1. NOTE: All free names must have been asserted both declared and captured in an enclosing scope. Non-captured declared names cannot shadow a captured declared name, as in source text. It is permitted to assert a declared name as captured even if it is never observed to be captured.
         1. Let _freeNames_ be the FreeNames of _parseTree_.
         1. For each _fn_ in _freeNames_, do
@@ -2896,16 +2912,20 @@ interface VariableDeclarator : Node {
             1. Let _foundAssertedCapture_ be *false*.
             1. Repeat, while _scopeNode_.[[Enclosing]] is not *null* and _foundAssertedCapture_ is *false*,
                 1. Let _enclosingScope_ be _scopeNode_.[[Enclosing]].[[AssertedScope]].
-                1. Let _enclosingDeclaredNames_ be AllDeclaredNames(_enclosingScope_).
-                1. If _fn_ is in _enclosingDeclaredNames_, then
-                    1. If _fn_ is in _enclosingScope_`.capturedNames`, then set _foundAssertedCapture_ to *true*.
-                    1. Else throw a *SyntaxError* exception.
+                1. If _scope_ is an `AssertedBlockScope` or an `AssertedScriptGlobalScope` or an `AssertedVarScope`, then
+                    1. Let _enclosingDeclaredOrBoundNames_ be _enclosingScope_`.declaredNames`.
                 1. Else,
+                    1. Let _enclosingDeclaredOrBoundNames_ be _enclosingScope_`.boundNames`.
+                1. For each _d_ in _enclosingDeclaredOrBoundNames_, do
+                    1. If _fn_ is _d_`.name`, then
+                        1. If _d_`.isCaptured` is *true*, then set _foundAssertedCapture_ to *true*.
+                        1. Else throw a *SyntaxError* exception.
+                1. If _foundAssertedCapture_ is *false*, then,
                     1. Set _outermostScope_ to _scopeNode_.
                     1. Set _scopeNode_ to _scopeNode_.[[Enclosing]].
             1. If _foundAssertedCapture_ is *false*, then
                 1. NOTE: For scripts, global vars are properties on the global object and not bindings.
-                1. If _outermostScope_ is not an `AssertedScriptGlobalLexicalScope`, then throw a *SyntaxError* exception.
+                1. If _outermostScope_ is not an `AssertedScriptGlobalScope`, then throw a *SyntaxError* exception.
         1. NOTE: The presence of a direct eval must have been asserted in an enclosing scope. It is permitted to assert having a direct eval even if a direct eval is never observed in scope.
         1. If _parseTree_ contains a direct eval, then
             1. Let _scopeNode_ be FindAssertedScopeTreeNode(_scope_).
@@ -2929,10 +2949,10 @@ interface VariableDeclarator : Node {
         1. Let _foundCapturedThis_ to be *false*.
         1. Repeat, while _scopeNode_.[[Enclosing]] is not *null* and _foundCapturedThis_ is *false*,
             1. Let _enclosingScope_ be _scopeNode_.[[Enclosing]].[[AssertedScope]].
-            1. Let _enclosingDeclaredNames_ be AllDeclaredNames(_enclosingScope_).
-            1. If _enclosingDeclaredNames_ has `"this"` as its sole item, then
-                1. If `"this"` is in _enclosingScope_`.capturedNames`, then set _foundCapturedThis_ to *true*.
-                1. Else throw a *SyntaxError* exception.
+            1. If _enclosingScope_ is an `AssertedBlockScope`, then
+                1. If _enclosingScope_`.declaredNames` has a single item _d_ and _d_`.name` is `"this"`, then
+                    1. If _d_`.isCaptured` is *true*, then set _foundCapturedThis_ to *true*.
+                    1. Else throw a *SyntaxError* exception.
             1. Else,
                 1. Set _outermostScope_ to _scopeNode_.
                 1. Set _scopeNode_ to _scopeNode_.[[Enclosing]].
@@ -2944,9 +2964,12 @@ interface VariableDeclarator : Node {
       <emu-alg>
           1. NOTE: All functions except arrows may have their `this` binding captured by a nested arrow. Synthesize a scope that encloses the parameter and body scopes of the function body that contains the sole binding `this`. It is checked by CheckThisCapture.
           1. Let _synthThisScope_ be a new `AssertedBlockScope`.
-          1. Set _synthThisScope_`.lexicallyDeclaredNames` to be a new `FrozenArray&lt;IdentifierName&gt;` of length 1 containing `"this"`.
+          1. Let _thisDecl_ be a new `AssertedDeclaredName`.
+          1. Set _thisDecl_`.name` to `"this"`.
+          1. Set _thisDecl_`.kind` to `"non-const lexical"`.
           1. If _skippableNode_`.isThisCaptured` is *true*, then
-              1. Set _synthThisScope_`.capturedNames` to be a new `FrozenArray&lt;IdentifierName&gt;` of length 1 containing `"this"`.
+              1. Set _thisDecl_`.isCaptured` to *true*.
+          1. Set _synthThisScope_`.declaredNames` to be a new `FrozenArray&lt;AssertedDeclaredName&gt;` of length 1 containing _thisDecl_.
           1. Set _synthThisScope_`.hasDirectEval` to _enclosingScope_`.hasDirectEval`.
           1. Perform AddAssertedScopeTreeNode(_synthThisScope_, _enclosingScope_).
       </emu-alg>
@@ -2957,8 +2980,12 @@ interface VariableDeclarator : Node {
       <emu-alg>
           1. NOTE: Named function expressions may capture their name, which synthesizes a block scope containing only the function name enclosing the entire function expression.
           1. Let _synthNamedLambdaScope_ be a new `AssertedBlockScope`.
-          1. Set _synthNamedLambdaScope_`.lexicallyDeclaredNames` to be a new `FrozenArray&lt;IdentifierName&gt;` of length 1 containing _funcName_.
-          1. Set _synthNamedLambdaScope_`.capturedNames` to be a new `FrozenArray&lt;IdentifierName&gt;` of length 1 containing _funcName_.
+          1. Let _namedLambdaDecl_ be a new `AssertedDeclaredName`.
+          1. Set _namedLambdaDecl_`.name` to _funcName_.
+          1. NOTE: The named lambda name is not exactly a `const`, but it does not matter for the semantics of asserted scopes.
+          1. Set _namedLambdaDecl_`.kind` to `"const lexical"`.
+          1. Set _namedLambdaDecl_`.isCaptured` to *true*.
+          1. Set _synthNamedLambdaScope_`.declaredNames` to be a new `FrozenArray&lt;AssertedDeclaredName&gt;` of length 1 containing _namedLambdaDecl_.
           1. Set _synthNamedLambdaScope_`.hasDirectEval` to _enclosingScope_`.hasDirectEval`.
           1. Perform AddAssertedScopeTreeNode(_synthNamedLambdaScope_, _enclosingScope_).
           1. Return _synthNamedLambdaScope_.
