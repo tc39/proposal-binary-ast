@@ -33,7 +33,7 @@ contributors: Shu-yu Guo, David Teller, Ecma International
 
 typedef FrozenArray&lt;(SpreadElement or Expression)> Arguments;
 typedef DOMString string;
-typedef string Identifier;
+typedef string IdentifierDefinition;
 typedef string IdentifierName;
 typedef string Label;
 
@@ -110,13 +110,13 @@ enum AssertedDeclaredKind {
 // deferred assertions
 
 interface AssertedDeclaredName {
-  attribute IdentifierName name;
+  attribute [IdentifierDefinition] IdentifierName name;
   attribute AssertedDeclaredKind kind;
   attribute boolean isCaptured;
 }
 
 interface AssertedBoundName {
-  attribute IdentifierName name;
+  attribute [IdentifierDefinition] IdentifierName name;
   attribute boolean isCaptured;
 }
 
@@ -374,7 +374,7 @@ interface ClassElement : Node {
 
 
 // modules
-
+[Scope]
 interface Module : Node {
   attribute AssertedVarScope? scope;
   attribute FrozenArray&lt;Directive&gt; directives;
@@ -457,6 +457,7 @@ interface ExportLocalSpecifier : Node {
 // `MethodDefinition :: PropertyName ( UniqueFormalParameters ) { FunctionBody }`,
 // `GeneratorMethod :: * PropertyName ( UniqueFormalParameters ) { GeneratorBody }`,
 // `AsyncMethod :: async PropertyName ( UniqueFormalParameters ) { AsyncFunctionBody }`
+[Scope]
 interface Method : Node {
   // True for `AsyncMethod`, false otherwise.
   attribute boolean isAsync;
@@ -467,12 +468,14 @@ interface Method : Node {
 };
 
 // `get PropertyName ( ) { FunctionBody }`
+[Scope]
 interface Getter : Node {
   attribute PropertyName name;
   attribute SkippableFunctionBody skippableBody;
 };
 
 // `set PropertyName ( PropertySetParameterList ) { FunctionBody }`
+[Scope]
 interface Setter : Node {
   attribute PropertyName name;
   attribute SkippableSingleParameterAndFunctionBody skippableBody;
@@ -541,6 +544,7 @@ interface ArrayExpression : Node {
 
 // `ArrowFunction`,
 // `AsyncArrowFunction`
+[Scope]
 interface ArrowExpression : Node {
   // True for `AsyncArrowFunction`, false otherwise.
   attribute boolean isAsync;
@@ -608,6 +612,7 @@ interface ConditionalExpression : Node {
 // `FunctionExpression`,
 // `GeneratorExpression`,
 // `AsyncFunctionExpression`,
+[Scope]
 interface FunctionExpression : Node {
   attribute boolean isAsync;
   attribute boolean isGenerator;
@@ -822,12 +827,14 @@ interface WithStatement : Node {
 
 // other nodes
 
+[Scope]
 interface Block : Node {
   attribute AssertedBlockScope? scope;
   attribute FrozenArray&lt;Statement&gt; statements;
 };
 
 // `Catch`
+[Scope]
 interface CatchClause : Node {
   attribute AssertedBoundNamesScope? bindingScope;
   attribute Binding binding;
@@ -895,6 +902,7 @@ interface SkippableParametersAndArrowBody : Node {
 // `FunctionDeclaration`,
 // `GeneratorDeclaration`,
 // `AsyncFunctionDeclaration`
+[Scope]
 interface FunctionDeclaration : Node {
   attribute boolean isAsync;
   attribute boolean isGenerator;
@@ -902,6 +910,7 @@ interface FunctionDeclaration : Node {
   attribute SkippableParametersAndFunctionBody skippableBody;
 };
 
+[Scope]
 interface Script : Node {
   attribute AssertedScriptGlobalScope? scope;
   attribute FrozenArray&lt;Directive&gt; directives;
