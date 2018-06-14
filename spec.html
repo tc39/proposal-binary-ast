@@ -224,17 +224,17 @@ typedef (ExportAllFrom or
 
 typedef (ImportNamespace or Import) ImportDeclaration;
 
-typedef (EagerFunctionDeclaration or SkippableFunctionDeclaration) FunctionDeclaration;
+typedef (EagerFunctionDeclaration or LazyFunctionDeclaration) FunctionDeclaration;
 
-typedef (EagerFunctionExpression or SkippableFunctionExpression) FunctionExpression;
+typedef (EagerFunctionExpression or LazyFunctionExpression) FunctionExpression;
 
-typedef (EagerMethod or SkippableMethod) Method;
+typedef (EagerMethod or LazyMethod) Method;
 
-typedef (EagerGetter or SkippableGetter) Getter;
+typedef (EagerGetter or LazyGetter) Getter;
 
-typedef (EagerSetter or SkippableSetter) Setter;
+typedef (EagerSetter or LazySetter) Setter;
 
-typedef (EagerArrowExpression or SkippableArrowExpression) ArrowExpression;
+typedef (EagerArrowExpression or LazyArrowExpression) ArrowExpression;
 
 // bindings
 
@@ -458,33 +458,51 @@ interface ExportLocalSpecifier : Node {
 // `GeneratorMethod :: * PropertyName ( UniqueFormalParameters ) { GeneratorBody }`,
 // `AsyncMethod :: async PropertyName ( UniqueFormalParameters ) { AsyncFunctionBody }`
 interface EagerMethod : Node {
-  // True for `AsyncMethod`, false otherwise.
-  attribute boolean isAsync;
-  // True for `GeneratorMethod`, false otherwise.
-  attribute boolean isGenerator;
-  attribute PropertyName name;
-  attribute SkippableParametersAndFunctionBody skippableBody;
+  attribute MethodPrologue prologue;
+  attribute FunctionOrMethodContents contents;
 };
-[Skippable] interface SkippableMethod : Node {
-  attribute eager EagerMethod;
+interface LazyMethod : Node {
+  attribute MethodPrologue prologue;
+  [Lazy] attribute FunctionOrMethodContents contents;
+};
+interface MethodPrologue : Node {
+  attribute PropertyName name;
 };
 
 // `get PropertyName ( ) { FunctionBody }`
 interface EagerGetter : Node {
-  attribute PropertyName name;
-  attribute SkippableFunctionBody skippableBody;
+  attribute GetterPrologue prologue;
+  attribute GetterContents contents;
 };
-[Skippable] interface SkippableGetter : Node {
-  attribute eager EagerGetter;
+interface LazyGetter : Node {
+  attribute GetterPrologue prologue;
+  [Lazy] attribute GetterContents contents;
+};
+interface GetterPrologue : Node {
+  attribute PropertyName name;
+};
+interface GetterContents : Node {
+  attribute boolean? isThisCaptured;
+  attribute FunctionBody body;
 };
 
 // `set PropertyName ( PropertySetParameterList ) { FunctionBody }`
 interface EagerSetter : Node {
-  attribute PropertyName name;
-  attribute SkippableSingleParameterAndFunctionBody skippableBody;
+  attribute SetterPrologue prologue;
+  attribute SetterContents contents;
 };
-[Skippable] interface SkippableSetter : Node {
-  attribute eager EagerSetter;
+interface LazySetter : Node {
+  attribute SetterPrologue prologue;
+  [Lazy] attribute SetterContents contents;
+};
+interface SetterPrologue : Node {
+  attribute PropertyName name;
+};
+interface SetterContents : Node {
+  attribute boolean? isThisCaptured;
+  attribute AssertedParameterScope? parameterScope;
+  attribute Parameter param;
+  attribute FunctionBody body;
 };
 
 // `PropertyDefinition :: PropertyName : AssignmentExpression`
@@ -551,14 +569,19 @@ interface ArrayExpression : Node {
 // `ArrowFunction`,
 // `AsyncArrowFunction`
 interface EagerArrowExpression : Node {
-  // True for `AsyncArrowFunction`, false otherwise.
-  attribute boolean isAsync;
-  attribute SkippableParametersAndArrowBody skippableBody;
+  attribute ArrowExpressionContents contents;
 };
-[Skippable] interface SkippableArrowExpression : Node {
-  attribute eager EagerArrowExpression;
+interface LazyArrowExpression : Node {
+  [Lazy] attribute ArrowExpressionContents contents;
 };
 
+interface ArrowExpressionContents : Node {
+  // True for `AsyncArrowFunction`, false otherwise.
+  attribute boolean isAsync;
+  attribute AssertedParameterScope? parameterScope;
+  attribute FormalParameters params;
+  attribute (FunctionBody or Expression) body;
+};
 
 // `AssignmentExpression :: LeftHandSideExpression = AssignmentExpression`
 interface AssignmentExpression : Node {
@@ -622,13 +645,25 @@ interface ConditionalExpression : Node {
 // `GeneratorExpression`,
 // `AsyncFunctionExpression`,
 interface EagerFunctionExpression : Node {
+    attribute FunctionExpressionPrologue prologue;
+    attribute FunctionExpressionContents contents;
+};
+interface LazyFunctionExpression : Node {
+    attribute FunctionExpressionPrologue prologue;
+    [Lazy] attribute FunctionExpressionContents contents;
+};
+interface FunctionExpressionPrologue : Node {
+  attribute BindingIdentifier? name;
+};
+
+interface FunctionExpressionContents : Node {
   attribute boolean isAsync;
   attribute boolean isGenerator;
-  attribute BindingIdentifier? name;
-  attribute SkippableParametersAndFunctionExpressionBody skippableBody;
-};
-[Skippable] interface SkippableFunctionExpression : Node {
-  attribute eager EagerFunctionExpression;
+  attribute boolean? isFunctionNameCaptured;
+  attribute boolean? isThisCaptured;
+  attribute AssertedParameterScope? parameterScope;
+  attribute FormalParameters params;
+  attribute FunctionBody body;
 };
 
 // `IdentifierReference`
@@ -861,66 +896,39 @@ interface FormalParameters : Node {
 };
 
 interface FunctionBody : Node {
-  attribute FrozenArray&lt;Directive&gt; directives;
+  attribute AssertedVarScope? bodyScope;
   attribute FrozenArray&lt;Statement&gt; statements;
 };
 
-interface SkippableFunctionBody : Node {
-  attribute boolean skip;
-  attribute boolean? isThisCaptured;
-  attribute AssertedVarScope? bodyScope;
-  attribute FunctionBody body;
-}
 
-interface SkippableSingleParameterAndFunctionBody : Node {
-  attribute boolean skip;
-  attribute boolean? isThisCaptured;
-  attribute AssertedParameterScope? parameterScope;
-  attribute AssertedVarScope? bodyScope;
-  attribute Parameter param;
-  attribute FunctionBody body;
-}
-
-interface SkippableParametersAndFunctionBody : Node {
-  attribute boolean skip;
-  attribute boolean? isThisCaptured;
-  attribute AssertedParameterScope? parameterScope;
-  attribute AssertedVarScope? bodyScope;
-  attribute FormalParameters params;
-  attribute FunctionBody body;
-}
-
-interface SkippableParametersAndFunctionExpressionBody : Node {
-  attribute boolean skip;
-  attribute boolean? isFunctionNameCaptured;
-  attribute boolean? isThisCaptured;
-  attribute AssertedParameterScope? parameterScope;
-  attribute AssertedVarScope? bodyScope;
-  attribute FormalParameters params;
-  attribute FunctionBody body;
-}
-
-interface SkippableParametersAndArrowBody : Node {
-  attribute boolean skip;
-  attribute AssertedParameterScope? parameterScope;
-  attribute AssertedVarScope? bodyScope;
-  attribute FormalParameters params;
-  attribute (FunctionBody or Expression) body;
-}
 
 // `FunctionDeclaration`,
 // `GeneratorDeclaration`,
 // `AsyncFunctionDeclaration`
 interface EagerFunctionDeclaration : Node {
-  attribute boolean isAsync;
-  attribute boolean isGenerator;
-  attribute BindingIdentifier name;
-  attribute SkippableParametersAndFunctionBody skippableBody;
+  attribute FunctionDeclarationPrologue prologue;
+  attribute FunctionDeclarationContents contents;
 };
 
-[Skippable] interface SkippableFunctionDeclaration : Node {
-  attribute eager EagerFunctionDeclaration;
+interface LazyFunctionDeclaration : Node {
+  attribute FunctionDeclarationPrologue prologue;
+  [Lazy] attribute FunctionDeclarationContents contentsc;
 };
+
+interface FunctionDeclarationPrologue : Node {
+  attribute BindingIdentifier name;
+  attribute FrozenArray&lt;Directive&gt; directives;
+};
+
+interface FunctionOrMethodContents : Node {
+  attribute boolean isAsync;
+  attribute boolean isGenerator;
+  attribute boolean? isThisCaptured;
+  attribute AssertedParameterScope? parameterScope;
+  attribute FormalParameters params;
+  attribute FunctionBody body;
+};
+
 
 interface Script : Node {
   attribute AssertedScriptGlobalLexicalScope? scope;
