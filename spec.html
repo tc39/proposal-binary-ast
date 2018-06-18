@@ -458,29 +458,26 @@ interface ExportLocalSpecifier : Node {
 // `GeneratorMethod :: * PropertyName ( UniqueFormalParameters ) { GeneratorBody }`,
 // `AsyncMethod :: async PropertyName ( UniqueFormalParameters ) { AsyncFunctionBody }`
 interface EagerMethod : Node {
-  attribute MethodPrologue prologue;
+  attribute PropertyName name;
   attribute FunctionOrMethodContents contents;
 };
 interface LazyMethod : Node {
-  attribute MethodPrologue prologue;
-  [Lazy] attribute FunctionOrMethodContents contents;
-};
-interface MethodPrologue : Node {
   attribute PropertyName name;
+  attribute FrozenArray&lt;Directive&gt; directives;
+  [Lazy] attribute FunctionOrMethodContents contents;
 };
 
 // `get PropertyName ( ) { FunctionBody }`
 interface EagerGetter : Node {
-  attribute GetterPrologue prologue;
+  attribute PropertyName name;
   attribute GetterContents contents;
 };
 interface LazyGetter : Node {
-  attribute GetterPrologue prologue;
+  attribute PropertyName name;
+  attribute FrozenArray&lt;Directive&gt; directives;
   [Lazy] attribute GetterContents contents;
 };
-interface GetterPrologue : Node {
-  attribute PropertyName name;
-};
+
 interface GetterContents : Node {
   attribute boolean? isThisCaptured;
   attribute FunctionBody body;
@@ -488,16 +485,15 @@ interface GetterContents : Node {
 
 // `set PropertyName ( PropertySetParameterList ) { FunctionBody }`
 interface EagerSetter : Node {
-  attribute SetterPrologue prologue;
+  attribute PropertyName name;
   attribute SetterContents contents;
 };
 interface LazySetter : Node {
-  attribute SetterPrologue prologue;
+  attribute PropertyName name;
+  attribute FrozenArray&lt;Directive&gt; directives;
   [Lazy] attribute SetterContents contents;
 };
-interface SetterPrologue : Node {
-  attribute PropertyName name;
-};
+
 interface SetterContents : Node {
   attribute boolean? isThisCaptured;
   attribute AssertedParameterScope? parameterScope;
@@ -569,9 +565,11 @@ interface ArrayExpression : Node {
 // `ArrowFunction`,
 // `AsyncArrowFunction`
 interface EagerArrowExpression : Node {
+  attribute FrozenArray&lt;Directive&gt; directives;
   attribute ArrowExpressionContents contents;
 };
 interface LazyArrowExpression : Node {
+  attribute FrozenArray&lt;Directive&gt; directives;
   [Lazy] attribute ArrowExpressionContents contents;
 };
 
@@ -645,15 +643,13 @@ interface ConditionalExpression : Node {
 // `GeneratorExpression`,
 // `AsyncFunctionExpression`,
 interface EagerFunctionExpression : Node {
-    attribute FunctionExpressionPrologue prologue;
-    attribute FunctionExpressionContents contents;
+  attribute BindingIdentifier? name;
+  attribute FunctionExpressionContents contents;
 };
 interface LazyFunctionExpression : Node {
-    attribute FunctionExpressionPrologue prologue;
-    [Lazy] attribute FunctionExpressionContents contents;
-};
-interface FunctionExpressionPrologue : Node {
   attribute BindingIdentifier? name;
+  attribute FrozenArray&lt;Directive&gt; directives;
+  [Lazy] attribute FunctionExpressionContents contents;
 };
 
 interface FunctionExpressionContents : Node {
@@ -906,18 +902,15 @@ interface FunctionBody : Node {
 // `GeneratorDeclaration`,
 // `AsyncFunctionDeclaration`
 interface EagerFunctionDeclaration : Node {
-  attribute FunctionDeclarationPrologue prologue;
+  attribute BindingIdentifier name;
+  attribute FrozenArray&lt;Directive&gt; directives;
   attribute FunctionDeclarationContents contents;
 };
 
 interface LazyFunctionDeclaration : Node {
-  attribute FunctionDeclarationPrologue prologue;
-  [Lazy] attribute FunctionDeclarationContents contentsc;
-};
-
-interface FunctionDeclarationPrologue : Node {
   attribute BindingIdentifier name;
   attribute FrozenArray&lt;Directive&gt; directives;
+  [Lazy] attribute FunctionDeclarationContents contentsc;
 };
 
 interface FunctionOrMethodContents : Node {
