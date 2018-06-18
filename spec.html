@@ -235,6 +235,17 @@ typedef (ExportAllFrom or
 
 typedef (ImportNamespace or Import) ImportDeclaration;
 
+typedef (EagerFunctionDeclaration or LazyFunctionDeclaration) FunctionDeclaration;
+
+typedef (EagerFunctionExpression or LazyFunctionExpression) FunctionExpression;
+
+typedef (EagerMethod or LazyMethod) Method;
+
+typedef (EagerGetter or LazyGetter) Getter;
+
+typedef (EagerSetter or LazySetter) Setter;
+
+typedef (EagerArrowExpression or LazyArrowExpression) ArrowExpression;
 
 // bindings
 
@@ -457,25 +468,48 @@ interface ExportLocalSpecifier : Node {
 // `MethodDefinition :: PropertyName ( UniqueFormalParameters ) { FunctionBody }`,
 // `GeneratorMethod :: * PropertyName ( UniqueFormalParameters ) { GeneratorBody }`,
 // `AsyncMethod :: async PropertyName ( UniqueFormalParameters ) { AsyncFunctionBody }`
-interface Method : Node {
-  // True for `AsyncMethod`, false otherwise.
-  attribute boolean isAsync;
-  // True for `GeneratorMethod`, false otherwise.
-  attribute boolean isGenerator;
+interface EagerMethod : Node {
   attribute PropertyName name;
-  attribute SkippableParametersAndFunctionBody skippableBody;
+  attribute FunctionOrMethodContents contents;
+};
+interface LazyMethod : Node {
+  attribute PropertyName name;
+  attribute FrozenArray&lt;Directive&gt; directives;
+  [Lazy] attribute FunctionOrMethodContents contents;
 };
 
 // `get PropertyName ( ) { FunctionBody }`
-interface Getter : Node {
+interface EagerGetter : Node {
   attribute PropertyName name;
-  attribute SkippableFunctionBody skippableBody;
+  attribute GetterContents contents;
+};
+interface LazyGetter : Node {
+  attribute PropertyName name;
+  attribute FrozenArray&lt;Directive&gt; directives;
+  [Lazy] attribute GetterContents contents;
+};
+
+interface GetterContents : Node {
+  attribute boolean? isThisCaptured;
+  attribute FunctionBody body;
 };
 
 // `set PropertyName ( PropertySetParameterList ) { FunctionBody }`
-interface Setter : Node {
+interface EagerSetter : Node {
   attribute PropertyName name;
-  attribute SkippableSingleParameterAndFunctionBody skippableBody;
+  attribute SetterContents contents;
+};
+interface LazySetter : Node {
+  attribute PropertyName name;
+  attribute FrozenArray&lt;Directive&gt; directives;
+  [Lazy] attribute SetterContents contents;
+};
+
+interface SetterContents : Node {
+  attribute boolean? isThisCaptured;
+  attribute AssertedParameterScope? parameterScope;
+  attribute Parameter param;
+  attribute FunctionBody body;
 };
 
 // `PropertyDefinition :: PropertyName : AssignmentExpression`
@@ -541,10 +575,21 @@ interface ArrayExpression : Node {
 
 // `ArrowFunction`,
 // `AsyncArrowFunction`
-interface ArrowExpression : Node {
+interface EagerArrowExpression : Node {
+  attribute FrozenArray&lt;Directive&gt; directives;
+  attribute ArrowExpressionContents contents;
+};
+interface LazyArrowExpression : Node {
+  attribute FrozenArray&lt;Directive&gt; directives;
+  [Lazy] attribute ArrowExpressionContents contents;
+};
+
+interface ArrowExpressionContents : Node {
   // True for `AsyncArrowFunction`, false otherwise.
   attribute boolean isAsync;
-  attribute SkippableParametersAndArrowBody skippableBody;
+  attribute AssertedParameterScope? parameterScope;
+  attribute FormalParameters params;
+  attribute (FunctionBody or Expression) body;
 };
 
 // `AssignmentExpression :: LeftHandSideExpression = AssignmentExpression`
@@ -608,11 +653,24 @@ interface ConditionalExpression : Node {
 // `FunctionExpression`,
 // `GeneratorExpression`,
 // `AsyncFunctionExpression`,
-interface FunctionExpression : Node {
+interface EagerFunctionExpression : Node {
+  attribute BindingIdentifier? name;
+  attribute FunctionExpressionContents contents;
+};
+interface LazyFunctionExpression : Node {
+  attribute BindingIdentifier? name;
+  attribute FrozenArray&lt;Directive&gt; directives;
+  [Lazy] attribute FunctionExpressionContents contents;
+};
+
+interface FunctionExpressionContents : Node {
   attribute boolean isAsync;
   attribute boolean isGenerator;
-  attribute BindingIdentifier? name;
-  attribute SkippableParametersAndFunctionExpressionBody skippableBody;
+  attribute boolean? isFunctionNameCaptured;
+  attribute boolean? isThisCaptured;
+  attribute AssertedParameterScope? parameterScope;
+  attribute FormalParameters params;
+  attribute FunctionBody body;
 };
 
 // `IdentifierReference`
@@ -845,62 +903,36 @@ interface FormalParameters : Node {
 };
 
 interface FunctionBody : Node {
-  attribute FrozenArray&lt;Directive&gt; directives;
+  attribute AssertedVarScope? bodyScope;
   attribute FrozenArray&lt;Statement&gt; statements;
 };
 
-interface SkippableFunctionBody : Node {
-  attribute boolean skip;
-  attribute boolean? isThisCaptured;
-  attribute AssertedVarScope? bodyScope;
-  attribute FunctionBody body;
-}
 
-interface SkippableSingleParameterAndFunctionBody : Node {
-  attribute boolean skip;
-  attribute boolean? isThisCaptured;
-  attribute AssertedParameterScope? parameterScope;
-  attribute AssertedVarScope? bodyScope;
-  attribute Parameter param;
-  attribute FunctionBody body;
-}
-
-interface SkippableParametersAndFunctionBody : Node {
-  attribute boolean skip;
-  attribute boolean? isThisCaptured;
-  attribute AssertedParameterScope? parameterScope;
-  attribute AssertedVarScope? bodyScope;
-  attribute FormalParameters params;
-  attribute FunctionBody body;
-}
-
-interface SkippableParametersAndFunctionExpressionBody : Node {
-  attribute boolean skip;
-  attribute boolean? isFunctionNameCaptured;
-  attribute boolean? isThisCaptured;
-  attribute AssertedParameterScope? parameterScope;
-  attribute AssertedVarScope? bodyScope;
-  attribute FormalParameters params;
-  attribute FunctionBody body;
-}
-
-interface SkippableParametersAndArrowBody : Node {
-  attribute boolean skip;
-  attribute AssertedParameterScope? parameterScope;
-  attribute AssertedVarScope? bodyScope;
-  attribute FormalParameters params;
-  attribute (FunctionBody or Expression) body;
-}
 
 // `FunctionDeclaration`,
 // `GeneratorDeclaration`,
 // `AsyncFunctionDeclaration`
-interface FunctionDeclaration : Node {
+interface EagerFunctionDeclaration : Node {
+  attribute BindingIdentifier name;
+  attribute FrozenArray&lt;Directive&gt; directives;
+  attribute FunctionDeclarationContents contents;
+};
+
+interface LazyFunctionDeclaration : Node {
+  attribute BindingIdentifier name;
+  attribute FrozenArray&lt;Directive&gt; directives;
+  [Lazy] attribute FunctionDeclarationContents contentsc;
+};
+
+interface FunctionOrMethodContents : Node {
   attribute boolean isAsync;
   attribute boolean isGenerator;
-  attribute BindingIdentifier name;
-  attribute SkippableParametersAndFunctionBody skippableBody;
+  attribute boolean? isThisCaptured;
+  attribute AssertedParameterScope? parameterScope;
+  attribute FormalParameters params;
+  attribute FunctionBody body;
 };
+
 
 interface Script : Node {
   attribute AssertedScriptGlobalScope? scope;
