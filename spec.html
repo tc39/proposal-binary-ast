@@ -390,7 +390,7 @@ interface ClassElement : Node {
 // modules
 
 interface Module : Node {
-  attribute AssertedVarScope? scope;
+  attribute AssertedVarScope scope;
   attribute FrozenArray&lt;Directive&gt; directives;
   attribute FrozenArray&lt;(ImportDeclaration or ExportDeclaration or Statement)&gt; items;
 };
@@ -499,8 +499,8 @@ interface LazyGetter : Node {
 };
 
 interface GetterContents : Node {
-  attribute boolean? isThisCaptured;
-  attribute AssertedVarScope? bodyScope;
+  attribute boolean isThisCaptured;
+  attribute AssertedVarScope bodyScope;
   attribute FunctionBody body;
 };
 
@@ -517,10 +517,10 @@ interface LazySetter : Node {
 };
 
 interface SetterContents : Node {
-  attribute boolean? isThisCaptured;
-  attribute AssertedParameterScope? parameterScope;
+  attribute boolean isThisCaptured;
+  attribute AssertedParameterScope parameterScope;
   attribute Parameter param;
-  attribute AssertedVarScope? bodyScope;
+  attribute AssertedVarScope bodyScope;
   attribute FunctionBody body;
 };
 
@@ -603,9 +603,9 @@ interface LazyArrowExpression : Node {
 };
 
 interface ArrowExpressionContents : Node {
-  attribute AssertedParameterScope? parameterScope;
+  attribute AssertedParameterScope parameterScope;
   attribute FormalParameters params;
-  attribute AssertedVarScope? bodyScope;
+  attribute AssertedVarScope bodyScope;
   attribute (FunctionBody or Expression) body;
 };
 
@@ -688,9 +688,9 @@ interface LazyFunctionExpression : Node {
 interface FunctionExpressionContents : Node {
   attribute boolean? isFunctionNameCaptured;
   attribute boolean? isThisCaptured;
-  attribute AssertedParameterScope? parameterScope;
+  attribute AssertedParameterScope parameterScope;
   attribute FormalParameters params;
-  attribute AssertedVarScope? bodyScope;
+  attribute AssertedVarScope bodyScope;
   attribute FunctionBody body;
 };
 
@@ -902,13 +902,13 @@ interface WithStatement : Node {
 // other nodes
 
 interface Block : Node {
-  attribute AssertedBlockScope? scope;
+  attribute AssertedBlockScope scope;
   attribute FrozenArray&lt;Statement&gt; statements;
 };
 
 // `Catch`
 interface CatchClause : Node {
-  attribute AssertedBoundNamesScope? bindingScope;
+  attribute AssertedBoundNamesScope bindingScope;
   attribute Binding binding;
   attribute Block body;
 };
@@ -947,16 +947,16 @@ interface LazyFunctionDeclaration : Node {
 };
 
 interface FunctionOrMethodContents : Node {
-  attribute boolean? isThisCaptured;
-  attribute AssertedParameterScope? parameterScope;
+  attribute boolean isThisCaptured;
+  attribute AssertedParameterScope parameterScope;
   attribute FormalParameters params;
-  attribute AssertedVarScope? bodyScope;
+  attribute AssertedVarScope bodyScope;
   attribute FunctionBody body;
 };
 
 
 interface Script : Node {
-  attribute AssertedScriptGlobalScope? scope;
+  attribute AssertedScriptGlobalScope scope;
   attribute FrozenArray&lt;Directive&gt; directives;
   attribute FrozenArray&lt;Statement&gt; statements;
 };
@@ -2923,9 +2923,8 @@ interface VariableDeclarator : Node {
     <emu-clause id="sec-checkassertedscope" aoid="CheckAssertedScope">
       <h1>CheckAssertedScope ( _scope_ , _parseTree_ )</h1>
       <emu-alg>
-        1. Assert: _scope_ is an `AssertedBlockScope?` or an `AssertedScriptGlobalScope?` or an `AssertedVarScope?` or an `AssertedParameterScope?` or an `AssertedBoundNamesScope?`.
+        1. Assert: _scope_ is an `AssertedBlockScope` or an `AssertedScriptGlobalScope` or an `AssertedVarScope` or an `AssertedParameterScope` or an `AssertedBoundNamesScope`.
         1. Assert: _parseTree_ is a non-empty Parse Node.
-        1. If _scope_ is *null*, then return.
         1. NOTE: All asserted declared names must be declared, and all asserted bound names must be bound.
         1. If _scope_ is an `AssertedBlockScope` or an `AssertedScriptGlobalScope` or an `AssertedVarScope`, then
             1. Let _varDeclaredNames_ be the VarDeclaredNames of _parseTree_.
@@ -2985,9 +2984,8 @@ interface VariableDeclarator : Node {
     <emu-clause id="sec-checkthiscapture" aoid="CheckThisCapture">
       <h1>CheckThisCapture ( _scope_ , _parseTree_ )</h1>
       <emu-alg>
-        1. Assert: _scope_ is an `AssertedVarScope?` or an `AssertedParameterScope?`.
+        1. Assert: _scope_ is an `AssertedVarScope` or an `AssertedParameterScope`.
         1. Assert: _parseTree_ is a non-empty Parse Node.
-        1. If _scope_ is *null*, then return.
         1. If the value of HasFreeThis of _parseTree_ is *false*, then return.
         1. Let _scopeNode_ be FindAssertedScopeTreeNode(_scope_).
         1. Let _foundCapturedThis_ to be *false*.
