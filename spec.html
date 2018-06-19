@@ -26,7 +26,7 @@ contributors: Shu-yu Guo, David Teller, Ecma International
   <p>This section is derived from <a href="https://github.com/shapesecurity/shift-spec/blob/es2017/spec.idl">Shift AST Spec</a> and parts are Copyright 2014-2017 Shape Security, Inc.</p>
   <p>Unlike the Shift AST spec, interface types are not used to inherit fields to control over ordering of fields. Type hierarchies that are not used to discriminate are collapsed to make space costs simple. Nor are they used to discriminate types, for which explicitly discriminated unions types are used.</p>
   <emu-note>Whereas Shift AST's design principle is ease of search-and-replace of node types, binary AST's design principle is ease of verification and ease of associating different behaviors with syntactically different (but possibly lexically similar) productions.</emu-note>
-  <p>The grammar is presented in WebIDL with the `[TypeIndicator]` and `[NonEmpty]` extensions per Shift AST spec. The `typedefs` of `or` types are to be read as recursive sum types. In text below, the "is a `Foo`" prose is shorthand for checking the node's `type` attribute being equal to `"Foo"`.</p>
+  <p>The grammar is presented in WebIDL with the `[TypeIndicator]` and `[NonEmpty]` extensions per Shift AST spec. The `[Lazy]` extension serves as a hint to the surface encoding that the `[Lazy]` attribute should be skippable in the byte stream in constant time. The `typedefs` of `or` types are to be read as recursive sum types. In text below, the "is a `Foo`" prose is shorthand for checking the node's `type` attribute being equal to `"Foo"`.</p>
 
   <pre><code class="language-webidl">
 // Type aliases and enums.
