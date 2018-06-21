@@ -1009,20 +1009,6 @@ interface VariableDeclarator : Node {
     <li>Ecmaify is the central dispatcher that dispatches on the interface type of its input.</li>
   </ul>
 
-  <emu-clause id="sec-hasmalformeddirectives" aoid="HasMalformedDirectives">
-    <h1>HasMalformedDirectives ( _directives_, _nodes_ )</h1>
-    <emu-alg>
-      1. Assert: _directives_ is a `FrozenArray&lt;Directive>`.
-      1. Assert: _nodes_ is a `FrozenArray&lt;Node>`.
-      1. For each _node_ in _nodes_, do
-          1. If the _node_ is an `ExpressionStatement` and _node_.expression is a `StringLiteralExpression`:
-              1. For each _dir_ in _directives_, do
-                  1. If _node_.`expression.value` is the same value as _dir_`.rawValue`, then return *true*.
-              1. NOTE: This restriction disallows encoding directives as string literals.
-      1. Return *false*.
-    </emu-alg>
-  </emu-clause>
-
   <emu-clause id="sec-statementecmaify" aoid="StatementEcmaify">
     <h1>StatementEcmaify ( _stmt_ )</h1>
     <emu-alg>
@@ -1048,6 +1034,29 @@ interface VariableDeclarator : Node {
           1. If _stmt_ is a `FunctionDeclaration`, then
               1. Set _n_ to |HoistableDeclaration|: ? Ecmaify(_stmt_).
               1. Set _n_ to be |Declaration| : _n_.
+          1. Else if _stmt_ an `ExpressionStatement` and _stmt_`.expression` is a `LiteralStringExpression`:
+              1. NOTE: String literals expression statements are always parenthsized to avoid being interpreted as directives.
+              1. Set _n_ to be ExpressionEcmaify(_stmt_`.expression`).
+              1. Set _n_ to be |PrimaryExpression| : <emu-t>(</emu-t> _n_ <emu-t>/</emu-t>.
+              1. Set _n_ to be |MemberExpression| : _n_.
+              1. Set _n_ to be |NewExpression| : _n_.
+              1. Set _n_ to be |LeftHandSideExpression| : _n_.
+              1. Set _n_ to be |UpdateExpression| : _n_.
+              1. Set _n_ to be |UnaryExpression| : _n_.
+              1. Set _n_ to be |ExponentiationExpression| : _n_.
+              1. Set _n_ to be |MultiplicativeExpression| : _n_.
+              1. Set _n_ to be |AdditiveExpression| : _n_.
+              1. Set _n_ to be |ShiftExpression| : _n_.
+              1. Set _n_ to be |RelationalExpression| : _n_.
+              1. Set _n_ to be |EqualityExpression| : _n_.
+              1. Set _n_ to be |BitwiseANDExpression| : _n_.
+              1. Set _n_ to be |BitwiseXORExpression| : _n_.
+              1. Set _n_ to be |BitwiseORExpression| : _n_.
+              1. Set _n_ to be |LogicalANDExpression| : _n_.
+              1. Set _n_ to be |LogicalORExpression| : _n_.
+              1. Set _n_ to be |AssignmentExpression| : _n_.
+              1. Set _n_ to be |Expression| : _n_.
+              1. Set _n_ to be |ExpressionStatement| : _n_ <emu-t>;</emu-t>.
           1. Else set _n_ to be ? StatementEcmaify(_stmt_).
           1. Set _n_ to be |StatementListItem| : _n_.
           1. If _list_ is empty, then set _list_ to |StatementList| : _n_.
@@ -1655,7 +1664,6 @@ interface VariableDeclarator : Node {
     <emu-alg>
       1. NOTE: This may be called when a binary AST corresponding to a script is evaluated via BinaryASTScriptEvaluationJob.
       1. Assert: _s_ is a `Script`.
-      1. If HasMalformedDirectives(_s_`.directives`, _s_`.statements`) is *true*, throw a *SyntaxError* exception.
       1. Let _enclosingScope_ be the current asserted scope.
       1. Set the current asserted scope to _s_`.scope`.
       1. Perform AddAssertedScopeTreeNode(_s_`.scope`, _enclosingScope_).
@@ -1729,7 +1737,6 @@ interface VariableDeclarator : Node {
       1. If _f_`.contents.body` is a `FunctionBody`, then
           1. NOTE: Directives must be non-null, but possibly empty, if the function body is a StatementList.
           1. If _f_ is an `ArrowExpression` and _f_`.directives` is *null*, then throw a *SyntaxError*.
-          1. If HasMalformedDirectives(_f_`.directives`, _f_`.contents.body`) is *true*, throw a *SyntaxError* exception.
           1. Let _dirStmts_ be _f_`.directives` concatenated with _f_`.contents.body`.
           1. Set _stmts_ to ? StatementListEcmaify(_dirStmts_).
       1. Else,
@@ -1816,7 +1823,7 @@ interface VariableDeclarator : Node {
     <h1>EcmaifyExpressionStatement ( _expr_ )</h1>
     <emu-alg>
       1. Assert: _expr_ is an `ExpressionStatement`.
-      1. Return |ExpressionStatement| : ? Ecmaify(_expr_`.expression`) <emu-t>;</emu-t>.
+      1. Return |ExpressionStatement| : ? ExpressionEcmaify(_expr_`.expression`) <emu-t>;</emu-t>.
     </emu-alg>
   </emu-clause>
 
