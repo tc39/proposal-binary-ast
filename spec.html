@@ -247,8 +247,10 @@ typedef (EagerGetter or LazyGetter) Getter;
 
 typedef (EagerSetter or LazySetter) Setter;
 
-typedef (EagerArrowExpression or
-         LazyArrowExpression) ArrowExpression;
+typedef (EagerArrowExpressionWithFunctionBody or
+         LazyArrowExpressionWithFunctionBody or
+         EagerArrowExpressionWithExpression or
+         LazyArrowExpressionWithExpression) ArrowExpression;
 
 // bindings
 
@@ -587,26 +589,41 @@ interface ArrayExpression : Node {
 
 // `ArrowFunction`,
 // `AsyncArrowFunction`
-interface EagerArrowExpression : Node {
+interface EagerArrowExpressionWithFunctionBody : Node {
   // True for `AsyncArrowFunction`, false otherwise.
   attribute boolean isAsync;
-  // Null if and only if the body is an Expression.
-  attribute FrozenArray&lt;Directive&gt;? directives;
-  attribute ArrowExpressionContents contents;
+  attribute FrozenArray&lt;Directive&gt; directives;
+  attribute ArrowExpressionContentsWithFunctionBody contents;
 };
-interface LazyArrowExpression : Node {
+interface LazyArrowExpressionWithFunctionBody : Node {
   // True for `AsyncArrowFunction`, false otherwise.
   attribute boolean isAsync;
-  // Null if and only if the body is an Expression.
-  attribute FrozenArray&lt;Directive&gt;? directives;
-  [Lazy] attribute ArrowExpressionContents contents;
+  attribute FrozenArray&lt;Directive&gt; directives;
+  [Lazy] attribute ArrowExpressionContentsWithFunctionBody contents;
+};
+interface EagerArrowExpressionWithExpression : Node {
+  // True for `AsyncArrowFunction`, false otherwise.
+  attribute boolean isAsync;
+  attribute ArrowExpressionContentsWithExpression contents;
+};
+interface LazyArrowExpressionWithExpression : Node {
+  // True for `AsyncArrowFunction`, false otherwise.
+  attribute boolean isAsync;
+  [Lazy] attribute ArrowExpressionContentsWithExpression contents;
 };
 
-interface ArrowExpressionContents : Node {
+interface ArrowExpressionContentsWithFunctionBody : Node {
   attribute AssertedParameterScope parameterScope;
   attribute FormalParameters params;
   attribute AssertedVarScope bodyScope;
-  attribute (FunctionBody or Expression) body;
+  attribute FunctionBody body;
+};
+
+interface ArrowExpressionContentsWithExpression : Node {
+  attribute AssertedParameterScope parameterScope;
+  attribute FormalParameters params;
+  attribute AssertedVarScope bodyScope;
+  attribute Expression body;
 };
 
 // `AssignmentExpression :: LeftHandSideExpression = AssignmentExpression`
