@@ -703,8 +703,8 @@ interface LazyFunctionExpression : Node {
 };
 
 interface FunctionExpressionContents : Node {
-  attribute boolean? isFunctionNameCaptured;
-  attribute boolean? isThisCaptured;
+  attribute boolean isFunctionNameCaptured;
+  attribute boolean isThisCaptured;
   attribute AssertedParameterScope parameterScope;
   attribute FormalParameters params;
   attribute AssertedVarScope bodyScope;
