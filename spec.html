@@ -2961,8 +2961,8 @@ interface VariableDeclarator : Node {
                     1. Append to _constLexicallyDeclaredNames_ the elements of BoundNames of _d_.
                 1. Else,
                     1. Append to _nonConstLexicallyDeclaredNames_ the elements of BoundNames of _d_.
-            1. Perform ? CheckDeclaredNames(_scope_`.lexicallyDeclaredNames`, `"const lexical"`, _constLexicallyDeclaredNames_).
-            1. Perform ? CheckDeclaredNames(_scope_`.lexicallyDeclaredNames`, `"non-const lexical"`, _nonConstLexicallyDeclaredNames_).
+            1. Perform ? CheckDeclaredNames(_scope_`.declaredNames`, `"const lexical"`, _constLexicallyDeclaredNames_).
+            1. Perform ? CheckDeclaredNames(_scope_`.declaredNames`, `"non-const lexical"`, _nonConstLexicallyDeclaredNames_).
         1. Else if _scope_ is an `AssertedParameterScope`, then
             1. NOTE: The positions as well as the names of parameters must match.
             1. Let _paramNames_ be the BoundNames of _parseTree_.
