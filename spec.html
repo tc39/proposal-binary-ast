@@ -113,12 +113,12 @@ interface AssertedDeclaredName {
   attribute IdentifierName name;
   attribute AssertedDeclaredKind kind;
   attribute boolean isCaptured;
-}
+};
 
 interface AssertedBoundName {
   attribute IdentifierName name;
   attribute boolean isCaptured;
-}
+};
 
 interface AssertedBlockScope {
   attribute FrozenArray&lt;AssertedDeclaredName&gt; declaredNames;
@@ -960,7 +960,7 @@ interface LazyFunctionDeclaration : Node {
   attribute boolean isGenerator;
   attribute BindingIdentifier name;
   attribute FrozenArray&lt;Directive&gt; directives;
-  [Lazy] attribute FunctionOrMethodContents content;
+  [Lazy] attribute FunctionOrMethodContents contents;
 };
 
 interface FunctionOrMethodContents : Node {
