@@ -115,6 +115,21 @@ interface AssertedDeclaredName {
   attribute boolean isCaptured;
 };
 
+interface AssertedPositionalParameterName {
+  attribute unsigned short index;
+  attribute IdentifierName name;
+  attribute boolean isCaptured;
+};
+
+interface AssertedParameterName {
+  attribute IdentifierName name;
+  attribute boolean isCaptured;
+};
+
+typedef (AssertedPositionalParameterName or
+         AssertedParameterName)
+        AssertedMaybePositionalParameterName;
+
 interface AssertedBoundName {
   attribute IdentifierName name;
   attribute boolean isCaptured;
@@ -136,9 +151,8 @@ interface AssertedVarScope {
 };
 
 interface AssertedParameterScope {
-  attribute FrozenArray&lt;AssertedBoundName&gt; boundNames;
+  attribute FrozenArray<AssertedMaybePositionalParameterName> paramNames;
   attribute boolean hasDirectEval;
-  attribute boolean isSimpleParameterList;
 };
 
 interface AssertedBoundNamesScope {
@@ -2931,6 +2945,32 @@ interface VariableDeclarator : Node {
       </emu-alg>
     </emu-clause>
 
+    <emu-clause id="sec-checkpositionalparameterindex" aoid="CheckPositionalParameterIndex">
+      <h1>CheckPositionalParameterIndices ( _expectedParams_, _positionalParamNames_ )</h1>
+      <emu-alg>
+        1. Let _paramIndices_ be CreatePositionalParameterIndices(_positionalParamNames_).
+        1. For each _p_ in _expectedParams_, do
+            1. If _p_ is an `AssertedPositionalParameterName`, then
+                1. If _paramIndices_ contains an item _item_ where _item_.[[Name]] is _p_`.name` and _item_.[[Index]] is _p_`.index`, then
+                    1. Remove _item_ from _paramIndices_.
+                1. Else,
+                    1. throw a *SyntaxError* exception.
+        1. If _paramIndices_ is not empty, throw *SyntaxError* exception.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-createpositionalparameterindices" aoid="CreatePositionalParameterIndices">
+      <h1>CreatePositionalParameterIndices (_positionalParamNames_ )</h1>
+      <emu-alg>
+        1. Let _paramIndices_ be a new empty List.
+        1. Let _idx_ be 0.
+        1. For each _p_ in _positionalParamNames_ in List order, do
+            1. If _p_ is not an empty string, then
+                1. Append Record {[[Name]]: _p_, [[Index]]: _idx_} to _paramIndices_.
+        1. Return _paramIndices_.
+      </emu-alg>
+    </emu-clause>
+
     <emu-clause id="sec-checkboundnames" aoid="CheckBOundNames">
       <h1>CheckBoundNames ( _expectedBound_, _actualBound_ )</h1>
       <emu-alg>
@@ -2966,8 +3006,9 @@ interface VariableDeclarator : Node {
         1. Else if _scope_ is an `AssertedParameterScope`, then
             1. NOTE: The positions as well as the names of parameters must match.
             1. Let _paramNames_ be the BoundNames of _parseTree_.
-            1. Perform ? CheckParameterNames(_scope_`.boundNames`, _boundNames_).
-            1. If _scope_`.isSimpleParameterList` is not the same value as IsSimpleParameterList of _parseTree_, then throw a *SyntaxError* exception.
+            1. Perform ? CheckParameterNames(_scope_`.paramNames`, _paramNames_).
+            1. Let _positionalParamNames_ be the PositionalParameterNames of _parseTree_.
+            1. Perform ? CheckPositionalParameterIndices(_scope_`.paramNames`, _positionalParamNames_).
         1. Else,
             1. Let _boundNames_ be the BoundNames of _parseTree_.
             1. Perform ? CheckBoundNames(_scope_`.boundNames`, _boundNames_).
@@ -2981,6 +3022,8 @@ interface VariableDeclarator : Node {
                 1. Let _enclosingScope_ be _scopeNode_.[[Enclosing]].[[AssertedScope]].
                 1. If _scope_ is an `AssertedBlockScope` or an `AssertedScriptGlobalScope` or an `AssertedVarScope`, then
                     1. Let _enclosingDeclaredOrBoundNames_ be _enclosingScope_`.declaredNames`.
+                1. Else if _scope_ is an `AssertedParameterScope`, then,
+                    1. Let _enclosingDeclaredOrBoundNames_ be _enclosingScope_`.paramNames`.
                 1. Else,
                     1. Let _enclosingDeclaredOrBoundNames_ be _enclosingScope_`.boundNames`.
                 1. For each _d_ in _enclosingDeclaredOrBoundNames_, do
@@ -3209,6 +3252,75 @@ interface VariableDeclarator : Node {
         <emu-grammar>MethodDefinition</emu-grammar>
         <emu-alg>
           1. Return *false*.
+        </emu-alg>
+      </emu-clause>
+
+      <emu-clause id="sec-runtime-semantics-positionalparameters">
+        <h1>Static Semantics: PositionalParameterNames</h1>
+        <emu-see-also-para op="PositionalParameterNames"></emu-see-also-para>
+        <p>Collect the positional formal parameter names.</p>
+        <p>With parameters _formalParameters_.</p>
+
+        <emu-grammar>FormalParameters : [empty]</emu-grammar>
+        <emu-alg>
+          1. Return a new empty List.
+        </emu-alg>
+
+        <emu-grammar>FormalParameters : FunctionRestParameter</emu-grammar>
+        <emu-alg>
+          1. Return a new empty List.
+        </emu-alg>
+
+        <emu-grammar>FormalParameters : FormalParameterList</emu-grammar>
+        <emu-alg>
+          1. Return the PositionalParameterNames of |FormalParameterList|.
+        </emu-alg>
+
+        <emu-grammar>FormalParameters : FormalParameterList,</emu-grammar>
+        <emu-alg>
+          1. Return the PositionalParameterNames of |FormalParameterList|.
+        </emu-alg>
+
+        <emu-grammar>FormalParameters : FormalParameterList, FunctionRestParameter</emu-grammar>
+        <emu-alg>
+          1. Return the PositionalParameterNames of |FormalParameterList|.
+        </emu-alg>
+
+        <emu-grammar>FormalParameterList : FormalParameter</emu-grammar>
+        <emu-alg>
+          1. Return the PositionalParameterNames of |FormalParameter|.
+        </emu-alg>
+
+        <emu-grammar>FormalParameterList : FormalParameterList, FormalParameter</emu-grammar>
+        <emu-alg>
+          1. Let _params_ be PositionalParameterNames of |FormalParameterList|.
+          1. Append to _params_ the PositionalParameterNames of |FormalParameter|.
+          1. Return _params_
+        </emu-alg>
+
+        <emu-grammar>FormalParameter : BindingIdentifier Initializer_opt</emu-grammar>
+        <emu-alg>
+          1. Return the PositionalParameterNames of |BindingIdentifier|.
+        </emu-alg>
+
+        <emu-grammar>FormalParameter : Identifier</emu-grammar>
+        <emu-alg>
+          1. Return a new List containing the StringValue of |Identifier|.
+        </emu-alg>
+
+        <emu-grammar>FormalParameter : `yield`</emu-grammar>
+        <emu-alg>
+          1. Return a new List containing `"yield"`.
+        </emu-alg>
+
+        <emu-grammar>FormalParameter : `await`</emu-grammar>
+        <emu-alg>
+          1. Return a new List containing `"await"`.
+        </emu-alg>
+
+        <emu-grammar>FormalParameter : BindingPattern Initializer_opt</emu-grammar>
+        <emu-alg>
+          1. Return a new List containing an empty string.
         </emu-alg>
       </emu-clause>
     </emu-clause>
