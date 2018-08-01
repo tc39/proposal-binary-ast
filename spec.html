@@ -116,7 +116,12 @@ interface AssertedDeclaredName {
 };
 
 interface AssertedPositionalParameterName {
-  attribute unsigned short index;
+  attribute unsigned long index;
+  attribute IdentifierName name;
+  attribute boolean isCaptured;
+};
+
+interface AssertedRestParameterName {
   attribute IdentifierName name;
   attribute boolean isCaptured;
 };
@@ -127,6 +132,7 @@ interface AssertedParameterName {
 };
 
 typedef (AssertedPositionalParameterName or
+         AssertedRestParameterName or
          AssertedParameterName)
         AssertedMaybePositionalParameterName;
 
@@ -2954,7 +2960,7 @@ interface VariableDeclarator : Node {
                 1. If _paramIndices_ contains an item _item_ where _item_.[[Name]] is _p_`.name` and _item_.[[Index]] is _p_`.index`, then
                     1. Remove _item_ from _paramIndices_.
                 1. Else,
-                    1. throw a *SyntaxError* exception.
+                    1. Throw a *SyntaxError* exception.
         1. If _paramIndices_ is not empty, throw *SyntaxError* exception.
       </emu-alg>
     </emu-clause>
@@ -2967,7 +2973,30 @@ interface VariableDeclarator : Node {
         1. For each _p_ in _positionalParamNames_ in List order, do
             1. If _p_ is not an empty string, then
                 1. Append Record {[[Name]]: _p_, [[Index]]: _idx_} to _paramIndices_.
+            1. Set _idx_ to _idx_ + 1.
         1. Return _paramIndices_.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-checkrestparametername" aoid="CheckRestParameterName">
+      <h1>CheckRestParameterName ( _expectedParams_, _restParameterName_ )</h1>
+      <emu-alg>
+        1. Let _paramIndices_ be CreatePositionalParameterIndices(_positionalParamNames_).
+        1. Let _found_ be false.
+        1. For each _p_ in _expectedParams_, do
+            1. If _p_ is an `AssertedRestParameterName`, then
+                1. If _restParameterName_ is _p_`.name`, then
+                    1. If _found_ is true, then
+                        1. throw a *SyntaxError* exception.
+                    1. Let _found_ be true.
+                1. Else,
+                    1. Throw a *SyntaxError* exception.
+        1. if _restParameterName_ is an empty string, then
+            1. If _found_ is true, then
+                1. Throw a *SyntaxError* exception.
+        1. Else,
+            1. If _found_ is false, then
+                1. Throw a *SyntaxError* exception.
       </emu-alg>
     </emu-clause>
 
@@ -3009,6 +3038,8 @@ interface VariableDeclarator : Node {
             1. Perform ? CheckParameterNames(_scope_`.paramNames`, _paramNames_).
             1. Let _positionalParamNames_ be the PositionalParameterNames of _parseTree_.
             1. Perform ? CheckPositionalParameterIndices(_scope_`.paramNames`, _positionalParamNames_).
+            1. Let _restParameterName_ be the RestParameterName of _parseTree_.
+            1. Perform ? CheckRestParameterName(_scope_`.paramNames`, _restParameterName_).
         1. Else,
             1. Let _boundNames_ be the BoundNames of _parseTree_.
             1. Perform ? CheckBoundNames(_scope_`.boundNames`, _boundNames_).
@@ -3321,6 +3352,63 @@ interface VariableDeclarator : Node {
         <emu-grammar>FormalParameter : BindingPattern Initializer_opt</emu-grammar>
         <emu-alg>
           1. Return a new List containing an empty string.
+        </emu-alg>
+      </emu-clause>
+
+      <emu-clause id="sec-runtime-semantics-restparametername">
+        <h1>Static Semantics: RestParameterName</h1>
+        <emu-see-also-para op="RestParameterName"></emu-see-also-para>
+        <p>Return the rest parameter name.</p>
+        <p>With parameters _formalParameters_.</p>
+
+        <emu-grammar>FormalParameters : [empty]</emu-grammar>
+        <emu-alg>
+          1. Return an empty string.
+        </emu-alg>
+
+        <emu-grammar>FormalParameters : FunctionRestParameter</emu-grammar>
+        <emu-alg>
+          1. Return the RestParameterName of |FunctionRestParameter|.
+        </emu-alg>
+
+        <emu-grammar>FormalParameters : FormalParameterList</emu-grammar>
+        <emu-alg>
+          1. Return an empty string.
+        </emu-alg>
+
+        <emu-grammar>FormalParameters : FormalParameterList,</emu-grammar>
+        <emu-alg>
+          1. Return an empty string.
+        </emu-alg>
+
+        <emu-grammar>FormalParameters : FormalParameterList, FunctionRestParameter</emu-grammar>
+        <emu-alg>
+          1. Return the RestParameterName of |FunctionRestParameter|.
+        </emu-alg>
+
+        <emu-grammar>FormalParameter : BindingIdentifier Initializer_opt</emu-grammar>
+        <emu-alg>
+          1. Return the RestParameterName of |BindingIdentifier|.
+        </emu-alg>
+
+        <emu-grammar>FormalParameter : Identifier</emu-grammar>
+        <emu-alg>
+          1. Return the StringValue of |Identifier|.
+        </emu-alg>
+
+        <emu-grammar>FormalParameter : `yield`</emu-grammar>
+        <emu-alg>
+          1. Return `"yield"`.
+        </emu-alg>
+
+        <emu-grammar>FormalParameter : `await`</emu-grammar>
+        <emu-alg>
+          1. Return `"await"`.
+        </emu-alg>
+
+        <emu-grammar>FormalParameter : BindingPattern Initializer_opt</emu-grammar>
+        <emu-alg>
+          1. Return an empty string.
         </emu-alg>
       </emu-clause>
     </emu-clause>
