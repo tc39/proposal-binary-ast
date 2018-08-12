@@ -206,7 +206,7 @@ It is straightforward to layer additional improvements on this format in order t
 
 ## Prototype
 
-We implemented an early prototype in Mozilla’s SpiderMonkey engine, by using a grammar based on internal AST format. This was done for speed of implementation, and our next prototype will be [based on the Babylon AST](https://git.io/vQ1oE).
+We implemented an early prototype in Mozilla’s SpiderMonkey engine, by using a grammar based on internal AST format. This was done for speed of implementation, and our next prototype will be [based on the Babylon AST](https://git.io/fN57g).
 
 For the [facebook.com static newsfeed benchmark](https://git.io/vQ1aK), the binary AST representation was slightly smaller than the original JavaScript. This held true even after both representations were passed through gzip for compression. The size reduction mainly came from the use of a string table and variable-length identifiers for entries in the table. It also used variable-length encodings for representing numbers. Additional size wins are possible by leveraging domain-specific information, such as factoring out common subtrees.
 
@@ -247,7 +247,7 @@ Additionally, many complex sites today fetch JavaScript on demand when a user in
 
 **Would it be possible to write a tool to convert serialized AST back to JS?**
 
-Yes, it would be possible to automatically generate human-readable JavaScript from the AST format. By virtue of the syntax tree being abstract and not concrete, the pretty printer will not be perfect recreation of the input JavaScript but it will be semantically equivalent.
+Yes, it would be possible to automatically generate human-readable JavaScript from the AST format. By virtue of the syntax tree being abstract and not concrete, the pretty printer will not be a perfect recreation of the input JavaScript but it will be semantically equivalent.
 
 Such serializers may be crucial to providing a compelling devtooling story.
 
