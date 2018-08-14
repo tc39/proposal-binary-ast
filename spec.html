@@ -159,6 +159,7 @@ interface AssertedVarScope {
 interface AssertedParameterScope {
   attribute FrozenArray<AssertedMaybePositionalParameterName> paramNames;
   attribute boolean hasDirectEval;
+  attribute boolean isSimpleParameterList;
 };
 
 interface AssertedBoundNamesScope {
@@ -3040,6 +3041,7 @@ interface VariableDeclarator : Node {
             1. Perform ? CheckPositionalParameterIndices(_scope_`.paramNames`, _positionalParamNames_).
             1. Let _restParameterName_ be the RestParameterName of _parseTree_.
             1. Perform ? CheckRestParameterName(_scope_`.paramNames`, _restParameterName_).
+            1. If _scope_`.isSimpleParameterList` is not the same value as IsSimpleParameterList of _parseTree_, then throw a *SyntaxError* exception.
         1. Else,
             1. Let _boundNames_ be the BoundNames of _parseTree_.
             1. Perform ? CheckBoundNames(_scope_`.boundNames`, _boundNames_).
