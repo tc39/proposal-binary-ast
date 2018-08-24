@@ -498,6 +498,7 @@ interface EagerMethod : Node {
   attribute boolean isAsync;
   attribute boolean isGenerator;
   attribute PropertyName name;
+  attribute unsigned long length;
   attribute FrozenArray&lt;Directive&gt; directives;
   attribute FunctionOrMethodContents contents;
 };
@@ -505,6 +506,7 @@ interface LazyMethod : Node {
   attribute boolean isAsync;
   attribute boolean isGenerator;
   attribute PropertyName name;
+  attribute unsigned long length;
   attribute FrozenArray&lt;Directive&gt; directives;
   [Lazy] attribute FunctionOrMethodContents contents;
 };
@@ -530,11 +532,13 @@ interface GetterContents : Node {
 // `set PropertyName ( PropertySetParameterList ) { FunctionBody }`
 interface EagerSetter : Node {
   attribute PropertyName name;
+  attribute unsigned long length;
   attribute FrozenArray&lt;Directive&gt; directives;
   attribute SetterContents contents;
 };
 interface LazySetter : Node {
   attribute PropertyName name;
+  attribute unsigned long length;
   attribute FrozenArray&lt;Directive&gt; directives;
   [Lazy] attribute SetterContents contents;
 };
@@ -613,23 +617,27 @@ interface ArrayExpression : Node {
 interface EagerArrowExpressionWithFunctionBody : Node {
   // True for `AsyncArrowFunction`, false otherwise.
   attribute boolean isAsync;
+  attribute unsigned long length;
   attribute FrozenArray&lt;Directive&gt; directives;
   attribute ArrowExpressionContentsWithFunctionBody contents;
 };
 interface LazyArrowExpressionWithFunctionBody : Node {
   // True for `AsyncArrowFunction`, false otherwise.
   attribute boolean isAsync;
+  attribute unsigned long length;
   attribute FrozenArray&lt;Directive&gt; directives;
   [Lazy] attribute ArrowExpressionContentsWithFunctionBody contents;
 };
 interface EagerArrowExpressionWithExpression : Node {
   // True for `AsyncArrowFunction`, false otherwise.
   attribute boolean isAsync;
+  attribute unsigned long length;
   attribute ArrowExpressionContentsWithExpression contents;
 };
 interface LazyArrowExpressionWithExpression : Node {
   // True for `AsyncArrowFunction`, false otherwise.
   attribute boolean isAsync;
+  attribute unsigned long length;
   [Lazy] attribute ArrowExpressionContentsWithExpression contents;
 };
 
@@ -712,6 +720,7 @@ interface EagerFunctionExpression : Node {
   attribute boolean isAsync;
   attribute boolean isGenerator;
   attribute BindingIdentifier? name;
+  attribute unsigned long length;
   attribute FrozenArray&lt;Directive&gt; directives;
   attribute FunctionExpressionContents contents;
 };
@@ -719,6 +728,7 @@ interface LazyFunctionExpression : Node {
   attribute boolean isAsync;
   attribute boolean isGenerator;
   attribute BindingIdentifier? name;
+  attribute unsigned long length;
   attribute FrozenArray&lt;Directive&gt; directives;
   [Lazy] attribute FunctionExpressionContents contents;
 };
@@ -972,6 +982,7 @@ interface EagerFunctionDeclaration : Node {
   attribute boolean isAsync;
   attribute boolean isGenerator;
   attribute BindingIdentifier name;
+  attribute unsigned long length;
   attribute FrozenArray&lt;Directive&gt; directives;
   attribute FunctionOrMethodContents contents;
 };
@@ -980,6 +991,7 @@ interface LazyFunctionDeclaration : Node {
   attribute boolean isAsync;
   attribute boolean isGenerator;
   attribute BindingIdentifier name;
+  attribute unsigned long length;
   attribute FrozenArray&lt;Directive&gt; directives;
   [Lazy] attribute FunctionOrMethodContents contents;
 };
@@ -1515,7 +1527,6 @@ interface VariableDeclarator : Node {
     <h1>LazyFormalParametersEcmaify ( _maybeLazyNode_ )</h1>
     <emu-alg>
       1. NOTE: When a |FormalParameters| : [empty] tagged as being produced by a binary AST `FormalParameters` is evaluated at runtime, Ecmaify is run on the parameters at that time to delazify.
-      1. TODO: The `length` property Function instances need delazifying.
       1. If _maybeLazyNode_ is a `LazyFunctionDeclaration`, a `LazyFunctionExpression`, or a `LazyMethod`, then
           1. Let _emptyParams_ be |FormalParameters| : [empty].
           1. Tag _emptyParams_ as being produced by _maybeLazyNode_.
@@ -1528,6 +1539,7 @@ interface VariableDeclarator : Node {
           1. Set the current asserted scope to _paramScope_.
           1. Perform AddAssertedScopeTreeNode(_paramScope_, _enclosingScope_).
           1. Let _delazifiedParams_ be ? EcmaifyFormalParameters(_params_).
+          1. Perform ? CheckFunctionLength(_delazifiedParams_, _maybeLazyNode_).
           1. Perform ? CheckAssertedScope(_paramScope_, _delazifiedParams_).
           1. Return _delazifiedParams_.
     </emu-alg>
@@ -1537,7 +1549,6 @@ interface VariableDeclarator : Node {
     <h1>LazyCoverArrowParameterListEcmaify ( _maybeLazyNode_ )</h1>
     <emu-alg>
       1. NOTE: When a |CoverParenthesizedExpressionAndArrowParameterList| : <emu-t>(</emu-t> <emu-t>)</emu-t> tagged as being produced by a binary AST `FormalParameters` is evaluated at runtime, Ecmaify is run on the parameters at that time to delazify.
-      1. TODO: The `length` property Function instances need delazifying.
       1. If _maybeLazyNode_ is a `LazyArrowExpression`, then
           1. Let _emptyArrowParams0_ be a |CoverParenthesizedExpressionAndArrowParameterList| : <emu-t>(</emu-t> <emu-t>)</emu-t>.
           1. Let _emptyArrowParams_ be |ArrowParameters| : _emptyArrowParams0_.
@@ -1551,6 +1562,7 @@ interface VariableDeclarator : Node {
           1. Set the current asserted scope to _paramScope_.
           1. Perform AddAssertedScopeTreeNode(_paramScope_, _enclosingScope_).
           1. Let _delazifiedParams_ be ? EcmaifyCoverArrowParameterList(_params_).
+          1. Perform ? CheckFunctionLength(_delazifiedParams_, _maybeLazyNode_).
           1. Perform ? CheckAssertedScope(_paramScope_, _delazifiedParams_).
           1. Perform ? CheckThisCapture(_paramScope_, _delazifiedParams_).
           1. Return _delazifiedParams_.
@@ -1561,7 +1573,6 @@ interface VariableDeclarator : Node {
     <h1>LazyPropertySetParameterListEcmaify ( _maybeLazyNode_ )</h1>
     <emu-alg>
       1. NOTE: When a |PropertySetParameterList| tagged as being produced by a binary AST `Parameter` is evaluated at runtime, Ecmaify is run on the parameter at that time to delazify.
-      1. TODO: The `length` property Function instances need delazifying.
       1. TODO: |FormalParameter| needs an empty variant for tagging.
       1. If _maybeLazyNode_ is a `LazySetter`, then
           1. Let _placeholder_ be |Identifier| : <emu-t>_</emu-t>.
@@ -3135,6 +3146,20 @@ interface VariableDeclarator : Node {
       </emu-alg>
     </emu-clause>
 
+    <emu-clause id="sec-checkfunctionlength" aoid="CheckFunctionLength">
+      <h1>CheckFunctionLength ( _params_ , _maybeLazyNode_ )</h1>
+      <emu-alg>
+        1. Assert: _maybeLazyNode_ is a `FunctionDeclaration`, a `FunctionExpression`, a `Method`, a `Getter`, a `Setter`, or an `ArrowExpression`.
+        1. Assert: _params_ is not tagged as being produced by an AST node.
+        1. If _maybeLazyNode_ is a `Getter`, then
+            1. Let _length_ be 0.
+        1. Else,
+            1. Let _length_ be _maybeLazyNode_`.length`.
+        1. If _length_ is not equal to ExpectedArgumentCount of _params_, then
+            1. Throw a *SyntaxError*
+      </emu-alg>
+    </emu-clause>
+
     <emu-clause id="sec-newstaticsemantics">
       <h1>Static Semantics</h1>
       <p>FreeNames is a new Static Semantics that collects uses of unbound variables.</p>
@@ -3413,6 +3438,15 @@ interface VariableDeclarator : Node {
           1. Return an empty string.
         </emu-alg>
       </emu-clause>
+
+      <emu-clause id="sec-function-definitions-static-semantics-expectedargumentcount">
+        <h1>Static Semantics: ExpectedArgumentCount</h1>
+        <p>When _FormalParameters_ is tagged as being produced by _lazyNode_.</p>
+
+        <emu-grammar>FormalParameters : FormalParameters</emu-grammar>
+        <emu-alg>
+          1. Return _lazyNode_`.length`.
+        </emu-alg>
     </emu-clause>
   </emu-clause>
 
@@ -3574,6 +3608,7 @@ interface VariableDeclarator : Node {
           1. Set the current asserted scope to _funcAst_`.contents.parameterScope`.
           1. Let _params_ be ? EcmaifyFormalParameters(_funcAst_`.contents.params`).
           1. Set the current asserted scope to *null*.
+          1. Perform ? CheckFunctionLength(_params_, _funcAst_).
           1. Return _params_.
       1. Else return |FormalParameters|.
     </emu-alg>
@@ -3590,6 +3625,7 @@ interface VariableDeclarator : Node {
           1. Set the current asserted scope to _funcAst_`.contents.parameterScope`.
           1. Let _params_ be ? EcmaifyCoverArrowParameterList(_funcAst_`.contents.params`).
           1. Set the current asserted scope to *null*.
+          1. Perform ? CheckFunctionLength(_params_, _funcAst_).
           1. Return _params_.
       1. Else return |ArrowParameters|.
     </emu-alg>
