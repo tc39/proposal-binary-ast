@@ -157,7 +157,7 @@ interface AssertedVarScope {
 };
 
 interface AssertedParameterScope {
-  attribute FrozenArray<AssertedMaybePositionalParameterName> paramNames;
+  attribute FrozenArray&lt;AssertedMaybePositionalParameterName&gt; paramNames;
   attribute boolean hasDirectEval;
   attribute boolean isSimpleParameterList;
 };
