@@ -2963,6 +2963,7 @@ interface VariableDeclarator : Node {
         1. For each _pn_ in _actualParams_ in List order, do
             1. If _expectedParams_`[idx]` is not _pn_, then throw a *SyntaxError* exception.
             1. Set _idx_ to _idx_ + 1.
+        1. NOTE: This method doesn't check duplicate parameter names.  Duplicate parameter names should be caught by Early Errors for FormalParameters.
       </emu-alg>
     </emu-clause>
 
@@ -2977,6 +2978,7 @@ interface VariableDeclarator : Node {
                 1. Else,
                     1. Throw a *SyntaxError* exception.
         1. If _paramIndices_ is not empty, throw *SyntaxError* exception.
+        1. NOTE: This method doesn't check duplicate parameter names.  Duplicate parameter names should be caught by Early Errors for FormalParameters.
       </emu-alg>
     </emu-clause>
 
