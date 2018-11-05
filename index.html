@@ -29,8 +29,11 @@
 
 <span class="hljs-keyword">typedef</span> <span class="hljs-built_in">FrozenArray</span>&lt;(SpreadElement <span class="hljs-keyword">or</span> Expression)&gt; Arguments;
 <span class="hljs-keyword">typedef</span> <span class="hljs-built_in">DOMString</span> <span class="hljs-keyword">string</span>;
+
+<span class="hljs-comment">//  Identifier:: IdentifierName but not ReservedWord</span>
 <span class="hljs-keyword">typedef</span> <span class="hljs-keyword">string</span> Identifier;
 <span class="hljs-keyword">typedef</span> <span class="hljs-keyword">string</span> IdentifierName;
+
 <span class="hljs-keyword">typedef</span> <span class="hljs-keyword">string</span> Label;
 
 <span class="hljs-class"><span class="hljs-keyword">enum</span> <span class="hljs-title">VariableDeclarationKind</span> {</span>
@@ -153,7 +156,7 @@
 };
 
 <span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">AssertedParameterScope</span> {</span>
-  <span class="hljs-keyword">attribute</span> <span class="hljs-built_in">FrozenArray</span> paramNames;
+  <span class="hljs-keyword">attribute</span> <span class="hljs-built_in">FrozenArray</span>&lt;AssertedMaybePositionalParameterName&gt; paramNames;
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">boolean</span> hasDirectEval;
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">boolean</span> isSimpleParameterList;
 };
@@ -494,6 +497,7 @@
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">boolean</span> isAsync;
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">boolean</span> isGenerator;
   <span class="hljs-keyword">attribute</span> PropertyName name;
+  <span class="hljs-comment">// `length` property of this method.</span>
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> length;
   <span class="hljs-keyword">attribute</span> <span class="hljs-built_in">FrozenArray</span>&lt;Directive&gt; directives;
   <span class="hljs-keyword">attribute</span> FunctionOrMethodContents contents;
@@ -502,6 +506,7 @@
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">boolean</span> isAsync;
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">boolean</span> isGenerator;
   <span class="hljs-keyword">attribute</span> PropertyName name;
+  <span class="hljs-comment">// `length` property of this method.</span>
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> length;
   <span class="hljs-keyword">attribute</span> <span class="hljs-built_in">FrozenArray</span>&lt;Directive&gt; directives;
   <span class="hljs-meta">[Lazy]</span> <span class="hljs-keyword">attribute</span> FunctionOrMethodContents contents;
@@ -528,12 +533,14 @@
 <span class="hljs-comment">// `set PropertyName ( PropertySetParameterList ) { FunctionBody }`</span>
 <span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">EagerSetter</span> : <span class="hljs-title">Node</span> {</span>
   <span class="hljs-keyword">attribute</span> PropertyName name;
+  <span class="hljs-comment">// `length` property of this setter function.</span>
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> length;
   <span class="hljs-keyword">attribute</span> <span class="hljs-built_in">FrozenArray</span>&lt;Directive&gt; directives;
   <span class="hljs-keyword">attribute</span> SetterContents contents;
 };
 <span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">LazySetter</span> : <span class="hljs-title">Node</span> {</span>
   <span class="hljs-keyword">attribute</span> PropertyName name;
+  <span class="hljs-comment">// `length` property of this setter function.</span>
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> length;
   <span class="hljs-keyword">attribute</span> <span class="hljs-built_in">FrozenArray</span>&lt;Directive&gt; directives;
   <span class="hljs-meta">[Lazy]</span> <span class="hljs-keyword">attribute</span> SetterContents contents;
@@ -613,6 +620,7 @@
 <span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">EagerArrowExpressionWithFunctionBody</span> : <span class="hljs-title">Node</span> {</span>
   <span class="hljs-comment">// True for `AsyncArrowFunction`, false otherwise.</span>
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">boolean</span> isAsync;
+  <span class="hljs-comment">// `length` property of this arrow function.</span>
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> length;
   <span class="hljs-keyword">attribute</span> <span class="hljs-built_in">FrozenArray</span>&lt;Directive&gt; directives;
   <span class="hljs-keyword">attribute</span> ArrowExpressionContentsWithFunctionBody contents;
@@ -620,6 +628,7 @@
 <span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">LazyArrowExpressionWithFunctionBody</span> : <span class="hljs-title">Node</span> {</span>
   <span class="hljs-comment">// True for `AsyncArrowFunction`, false otherwise.</span>
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">boolean</span> isAsync;
+  <span class="hljs-comment">// `length` property of this arrow function.</span>
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> length;
   <span class="hljs-keyword">attribute</span> <span class="hljs-built_in">FrozenArray</span>&lt;Directive&gt; directives;
   <span class="hljs-meta">[Lazy]</span> <span class="hljs-keyword">attribute</span> ArrowExpressionContentsWithFunctionBody contents;
@@ -627,12 +636,14 @@
 <span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">EagerArrowExpressionWithExpression</span> : <span class="hljs-title">Node</span> {</span>
   <span class="hljs-comment">// True for `AsyncArrowFunction`, false otherwise.</span>
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">boolean</span> isAsync;
+  <span class="hljs-comment">// `length` property of this arrow function.</span>
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> length;
   <span class="hljs-keyword">attribute</span> ArrowExpressionContentsWithExpression contents;
 };
 <span class="hljs-class"><span class="hljs-keyword">interface</span> <span class="hljs-title">LazyArrowExpressionWithExpression</span> : <span class="hljs-title">Node</span> {</span>
   <span class="hljs-comment">// True for `AsyncArrowFunction`, false otherwise.</span>
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">boolean</span> isAsync;
+  <span class="hljs-comment">// `length` property of this arrow function.</span>
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> length;
   <span class="hljs-meta">[Lazy]</span> <span class="hljs-keyword">attribute</span> ArrowExpressionContentsWithExpression contents;
 };
@@ -716,6 +727,7 @@
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">boolean</span> isAsync;
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">boolean</span> isGenerator;
   <span class="hljs-keyword">attribute</span> BindingIdentifier? name;
+  <span class="hljs-comment">// `length` property of this function.</span>
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> length;
   <span class="hljs-keyword">attribute</span> <span class="hljs-built_in">FrozenArray</span>&lt;Directive&gt; directives;
   <span class="hljs-keyword">attribute</span> FunctionExpressionContents contents;
@@ -724,6 +736,7 @@
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">boolean</span> isAsync;
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">boolean</span> isGenerator;
   <span class="hljs-keyword">attribute</span> BindingIdentifier? name;
+  <span class="hljs-comment">// `length` property of this function.</span>
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> length;
   <span class="hljs-keyword">attribute</span> <span class="hljs-built_in">FrozenArray</span>&lt;Directive&gt; directives;
   <span class="hljs-meta">[Lazy]</span> <span class="hljs-keyword">attribute</span> FunctionExpressionContents contents;
@@ -978,6 +991,7 @@
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">boolean</span> isAsync;
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">boolean</span> isGenerator;
   <span class="hljs-keyword">attribute</span> BindingIdentifier name;
+  <span class="hljs-comment">// `length` property of this function.</span>
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> length;
   <span class="hljs-keyword">attribute</span> <span class="hljs-built_in">FrozenArray</span>&lt;Directive&gt; directives;
   <span class="hljs-keyword">attribute</span> FunctionOrMethodContents contents;
@@ -987,6 +1001,7 @@
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">boolean</span> isAsync;
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">boolean</span> isGenerator;
   <span class="hljs-keyword">attribute</span> BindingIdentifier name;
+  <span class="hljs-comment">// `length` property of this function.</span>
   <span class="hljs-keyword">attribute</span> <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">long</span> length;
   <span class="hljs-keyword">attribute</span> <span class="hljs-built_in">FrozenArray</span>&lt;Directive&gt; directives;
   <span class="hljs-meta">[Lazy]</span> <span class="hljs-keyword">attribute</span> FunctionOrMethodContents contents;
@@ -1879,13 +1894,13 @@
 
     <emu-clause id="sec-checkparameternames" aoid="CheckParameterNames">
       <h1><span class="secnum">3.1.4</span>CheckParameterNames ( <var>expectedParams0</var>, <var>actualParams</var> )</h1>
-      <emu-alg><ol><li>Let <var>expectedParams</var> be a new empty <emu-xref href="#sec-list-and-record-specification-type"><a href="https://tc39.github.io/ecma262/#sec-list-and-record-specification-type">List</a></emu-xref>.</li><li>For each <var>p</var> in <var>expectedParams0</var>, do<ol><li>Add <var>p</var><code>.name</code> as the last element of <var>expectedParams</var>.</li></ol></li><li>Let <var>idx</var> be 0.</li><li>If <var>expectedParams</var> and <var>actualParams</var> have different lengths, then throw a <emu-val>SyntaxError</emu-val> exception.</li><li>For each <var>pn</var> in <var>actualParams</var> in <emu-xref href="#sec-list-and-record-specification-type"><a href="https://tc39.github.io/ecma262/#sec-list-and-record-specification-type">List</a></emu-xref> order, do<ol><li>If <var>expectedParams</var><code>[idx]</code> is not <var>pn</var>, then throw a <emu-val>SyntaxError</emu-val> exception.</li><li>Set <var>idx</var> to <var>idx</var> + 1.
-      </li></ol></li></ol></emu-alg>
+      <emu-alg><ol><li>Let <var>expectedParams</var> be a new empty <emu-xref href="#sec-list-and-record-specification-type"><a href="https://tc39.github.io/ecma262/#sec-list-and-record-specification-type">List</a></emu-xref>.</li><li>For each <var>p</var> in <var>expectedParams0</var>, do<ol><li>Add <var>p</var><code>.name</code> as the last element of <var>expectedParams</var>.</li></ol></li><li>Let <var>idx</var> be 0.</li><li>If <var>expectedParams</var> and <var>actualParams</var> have different lengths, then throw a <emu-val>SyntaxError</emu-val> exception.</li><li>For each <var>pn</var> in <var>actualParams</var> in <emu-xref href="#sec-list-and-record-specification-type"><a href="https://tc39.github.io/ecma262/#sec-list-and-record-specification-type">List</a></emu-xref> order, do<ol><li>If <var>expectedParams</var><code>[idx]</code> is not <var>pn</var>, then throw a <emu-val>SyntaxError</emu-val> exception.</li><li>Set <var>idx</var> to <var>idx</var> + 1.</li></ol></li><li>NOTE: This method doesn't check duplicate parameter names.  Duplicate parameter names should be caught by Early Errors for FormalParameters.
+      </li></ol></emu-alg>
     </emu-clause>
 
     <emu-clause id="sec-checkpositionalparameterindex" aoid="CheckPositionalParameterIndex">
       <h1><span class="secnum">3.1.5</span>CheckPositionalParameterIndices ( <var>expectedParams</var>, <var>positionalParamNames</var> )</h1>
-      <emu-alg><ol><li>Let <var>paramIndices</var> be <emu-xref aoid="CreatePositionalParameterIndices" id="_ref_375"><a href="#sec-createpositionalparameterindices">CreatePositionalParameterIndices</a></emu-xref>(<var>positionalParamNames</var>).</li><li>For each <var>p</var> in <var>expectedParams</var>, do<ol><li>If <var>p</var> is an <code>AssertedPositionalParameterName</code>, then<ol><li>If <var>paramIndices</var> contains an item <var>item</var> where <var>item</var>.[[Name]] is <var>p</var><code>.name</code> and <var>item</var>.[[Index]] is <var>p</var><code>.index</code>, then<ol><li>Remove <var>item</var> from <var>paramIndices</var>.</li></ol></li><li>Else,<ol><li>Throw a <emu-val>SyntaxError</emu-val> exception.</li></ol></li></ol></li></ol></li><li>If <var>paramIndices</var> is not empty, throw <emu-val>SyntaxError</emu-val> exception.
+      <emu-alg><ol><li>Let <var>paramIndices</var> be <emu-xref aoid="CreatePositionalParameterIndices" id="_ref_375"><a href="#sec-createpositionalparameterindices">CreatePositionalParameterIndices</a></emu-xref>(<var>positionalParamNames</var>).</li><li>For each <var>p</var> in <var>expectedParams</var>, do<ol><li>If <var>p</var> is an <code>AssertedPositionalParameterName</code>, then<ol><li>If <var>paramIndices</var> contains an item <var>item</var> where <var>item</var>.[[Name]] is <var>p</var><code>.name</code> and <var>item</var>.[[Index]] is <var>p</var><code>.index</code>, then<ol><li>Remove <var>item</var> from <var>paramIndices</var>.</li></ol></li><li>Else,<ol><li>Throw a <emu-val>SyntaxError</emu-val> exception.</li></ol></li></ol></li></ol></li><li>If <var>paramIndices</var> is not empty, throw <emu-val>SyntaxError</emu-val> exception.</li><li>NOTE: This method doesn't check duplicate parameter names.  Duplicate parameter names should be caught by Early Errors for FormalParameters.
       </li></ol></emu-alg>
     </emu-clause>
 
