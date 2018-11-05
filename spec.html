@@ -501,6 +501,7 @@ interface EagerMethod : Node {
   attribute boolean isAsync;
   attribute boolean isGenerator;
   attribute PropertyName name;
+  // `length` property of this method.
   attribute unsigned long length;
   attribute FrozenArray&lt;Directive&gt; directives;
   attribute FunctionOrMethodContents contents;
@@ -509,6 +510,7 @@ interface LazyMethod : Node {
   attribute boolean isAsync;
   attribute boolean isGenerator;
   attribute PropertyName name;
+  // `length` property of this method.
   attribute unsigned long length;
   attribute FrozenArray&lt;Directive&gt; directives;
   [Lazy] attribute FunctionOrMethodContents contents;
@@ -535,12 +537,14 @@ interface GetterContents : Node {
 // `set PropertyName ( PropertySetParameterList ) { FunctionBody }`
 interface EagerSetter : Node {
   attribute PropertyName name;
+  // `length` property of this setter function.
   attribute unsigned long length;
   attribute FrozenArray&lt;Directive&gt; directives;
   attribute SetterContents contents;
 };
 interface LazySetter : Node {
   attribute PropertyName name;
+  // `length` property of this setter function.
   attribute unsigned long length;
   attribute FrozenArray&lt;Directive&gt; directives;
   [Lazy] attribute SetterContents contents;
@@ -620,6 +624,7 @@ interface ArrayExpression : Node {
 interface EagerArrowExpressionWithFunctionBody : Node {
   // True for `AsyncArrowFunction`, false otherwise.
   attribute boolean isAsync;
+  // `length` property of this arrow function.
   attribute unsigned long length;
   attribute FrozenArray&lt;Directive&gt; directives;
   attribute ArrowExpressionContentsWithFunctionBody contents;
@@ -627,6 +632,7 @@ interface EagerArrowExpressionWithFunctionBody : Node {
 interface LazyArrowExpressionWithFunctionBody : Node {
   // True for `AsyncArrowFunction`, false otherwise.
   attribute boolean isAsync;
+  // `length` property of this arrow function.
   attribute unsigned long length;
   attribute FrozenArray&lt;Directive&gt; directives;
   [Lazy] attribute ArrowExpressionContentsWithFunctionBody contents;
@@ -634,12 +640,14 @@ interface LazyArrowExpressionWithFunctionBody : Node {
 interface EagerArrowExpressionWithExpression : Node {
   // True for `AsyncArrowFunction`, false otherwise.
   attribute boolean isAsync;
+  // `length` property of this arrow function.
   attribute unsigned long length;
   attribute ArrowExpressionContentsWithExpression contents;
 };
 interface LazyArrowExpressionWithExpression : Node {
   // True for `AsyncArrowFunction`, false otherwise.
   attribute boolean isAsync;
+  // `length` property of this arrow function.
   attribute unsigned long length;
   [Lazy] attribute ArrowExpressionContentsWithExpression contents;
 };
@@ -723,6 +731,7 @@ interface EagerFunctionExpression : Node {
   attribute boolean isAsync;
   attribute boolean isGenerator;
   attribute BindingIdentifier? name;
+  // `length` property of this function.
   attribute unsigned long length;
   attribute FrozenArray&lt;Directive&gt; directives;
   attribute FunctionExpressionContents contents;
@@ -731,6 +740,7 @@ interface LazyFunctionExpression : Node {
   attribute boolean isAsync;
   attribute boolean isGenerator;
   attribute BindingIdentifier? name;
+  // `length` property of this function.
   attribute unsigned long length;
   attribute FrozenArray&lt;Directive&gt; directives;
   [Lazy] attribute FunctionExpressionContents contents;
@@ -985,6 +995,7 @@ interface EagerFunctionDeclaration : Node {
   attribute boolean isAsync;
   attribute boolean isGenerator;
   attribute BindingIdentifier name;
+  // `length` property of this function.
   attribute unsigned long length;
   attribute FrozenArray&lt;Directive&gt; directives;
   attribute FunctionOrMethodContents contents;
@@ -994,6 +1005,7 @@ interface LazyFunctionDeclaration : Node {
   attribute boolean isAsync;
   attribute boolean isGenerator;
   attribute BindingIdentifier name;
+  // `length` property of this function.
   attribute unsigned long length;
   attribute FrozenArray&lt;Directive&gt; directives;
   [Lazy] attribute FunctionOrMethodContents contents;
