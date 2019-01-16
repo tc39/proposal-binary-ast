@@ -6,6 +6,8 @@ David Teller, Kannan Vijayan (Mozilla)
 
 Vladan Djeric (Facebook)
 
+Ingvar Stepanyan (Cloudflare)
+
 This is the explainer document for a proposed new binary AST format for JS.
 
 ## Motivation
